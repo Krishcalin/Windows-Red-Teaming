@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red Team Scan Report — {{ scan.target.host }}</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --critical: #ff4444;
+            --high: #ff8c00;
+            --medium: #ffd700;
+            --low: #00bfff;
+            --info: #8b949e;
+            --clean: #3fb950;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            color: var(--text);
+        }
+        h2 {
+            font-size: 1.25rem;
+            margin: 1.5rem 0 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .meta-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem;
+        }
+        .meta-card .label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; }
+        .meta-card .value { font-size: 1.5rem; font-weight: 600; margin-top: 0.25rem; }
+
+        .severity-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            flex-wrap: wrap;
+        }
+        .severity-badge {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .sev-CRITICAL { background: var(--critical); color: #fff; }
+        .sev-HIGH     { background: var(--high); color: #000; }
+        .sev-MEDIUM   { background: var(--medium); color: #000; }
+        .sev-LOW      { background: var(--low); color: #000; }
+        .sev-INFO     { background: var(--info); color: #fff; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 0.6rem 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        th {
+            background: var(--surface);
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+        tr:hover { background: rgba(255,255,255,0.03); }
+
+        .status-success { color: var(--clean); }
+        .status-failure, .status-error { color: var(--critical); }
+        .status-skipped { color: var(--muted); }
+
+        .finding-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+            margin: 0.75rem 0;
+        }
+        .finding-card .finding-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .finding-card .technique-id {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            color: var(--muted);
+            font-size: 0.85rem;
+        }
+        .finding-card .description { margin: 0.5rem 0; }
+        .finding-card .evidence {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 0.75rem;
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.8rem;
+            white-space: pre-wrap;
+            word-break: break-all;
+            margin: 0.5rem 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .finding-card .recommendation {
+            color: var(--clean);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .footer {
+            margin-top: 3rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.8rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Windows Red Team Scan Report</h1>
+    <p style="color: var(--muted);">Generated: {{ generated_at }}</p>
+
+    <!-- Executive Summary -->
+    <div class="meta">
+        <div class="meta-card">
+            <div class="label">Target</div>
+            <div class="value">{{ scan.target.host }}</div>
+        </div>
+        <div class="meta-card">
+            <div class="label">Profile</div>
+            <div class="value">{{ scan.profile | title }}</div>
+        </div>
+        <div class="meta-card">
+            <div class="label">Techniques Tested</div>
+            <div class="value">{{ scan.techniques_tested }}</div>
+        </div>
+        <div class="meta-card">
+            <div class="label">Total Findings</div>
+            <div class="value" {% if scan.total_findings > 0 %}style="color: var(--high)"{% endif %}>
+                {{ scan.total_findings }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Severity Breakdown -->
+    <h2>Findings by Severity</h2>
+    <div class="severity-bar">
+        {% for sev in severity_order %}
+        <span class="severity-badge sev-{{ sev }}">
+            {{ sev }}: {{ scan.findings_by_severity.get(sev, 0) if scan.findings_by_severity.get is defined else scan.findings_by_severity[sev] | default(0) }}
+        </span>
+        {% endfor %}
+    </div>
+
+    <!-- Module Results Table -->
+    <h2>Technique Results</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Technique ID</th>
+                <th>Name</th>
+                <th>Tactic</th>
+                <th>Status</th>
+                <th>Findings</th>
+                <th>Simulated</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for mr in scan.module_results %}
+            <tr>
+                <td><code>{{ mr.technique_id }}</code></td>
+                <td>{{ mr.technique_name }}</td>
+                <td>{{ mr.tactic }}</td>
+                <td class="status-{{ mr.status }}">{{ mr.status | upper }}</td>
+                <td>{{ mr.findings | length }}</td>
+                <td>{{ "Yes" if mr.was_simulated else "No" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Detailed Findings -->
+    <h2>Detailed Findings</h2>
+    {% for mr in scan.module_results %}
+        {% for finding in mr.findings %}
+        <div class="finding-card">
+            <div class="finding-header">
+                <span class="severity-badge sev-{{ finding.severity }}">{{ finding.severity }}</span>
+                <span class="technique-id">{{ finding.technique_id }} — {{ finding.technique_name }}</span>
+            </div>
+            <div class="description">{{ finding.description }}</div>
+            {% if finding.evidence %}
+            <div class="evidence">{{ finding.evidence }}</div>
+            {% endif %}
+            {% if finding.recommendation %}
+            <div class="recommendation">&#9654; {{ finding.recommendation }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% endfor %}
+
+    {% if scan.total_findings == 0 %}
+    <div class="finding-card" style="border-color: var(--clean);">
+        <div class="description" style="color: var(--clean); text-align: center;">
+            No findings — all tested controls appear effective.
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        Windows Red Teaming Tool v1.0.0 &mdash; MITRE ATT&CK Framework<br>
+        Scan ID: {{ scan.scan_id }}
+    </div>
+</div>
+</body>
+</html>

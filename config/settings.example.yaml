@@ -1,0 +1,40 @@
+# Windows Red Teaming — Global Settings
+# Copy this file to settings.yaml and customize for your environment.
+# NOTE: settings.yaml is gitignored — never commit credentials.
+
+# Target machines (must be explicitly whitelisted)
+targets:
+  - host: "192.168.1.10"
+    connection: "winrm"       # local | winrm | smb | wmi
+    port: 5985
+    domain: ""
+    username: ""
+    password: ""
+    use_kerberos: false
+    ssl: false
+
+  - host: "localhost"
+    connection: "local"
+
+# Default scan profile
+default_profile: "full"
+
+# Output settings
+output:
+  report_dir: "reports"
+  evidence_dir: "evidence"
+  formats:
+    - "html"
+    - "json"
+  attack_layer: true          # Generate ATT&CK Navigator layer
+
+# Logging
+logging:
+  verbose: false
+  log_file: null              # Set to a path to enable file logging
+  json_output: false          # Use JSON-formatted logs
+
+# Safety
+safety:
+  require_authorization_banner: true
+  max_concurrent_modules: 1   # Run modules sequentially for safety

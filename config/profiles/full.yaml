@@ -1,0 +1,14 @@
+# Full Scan Profile — comprehensive assessment across all tactics
+#
+# Runs every enabled technique in check mode.
+# Simulation is off by default; use --simulate to enable.
+
+name: "full"
+description: "Comprehensive passive scan across all MITRE ATT&CK tactics"
+simulate: false
+
+# All tactics enabled (empty list = all)
+tactics: []
+
+# All techniques enabled (empty list = use techniques.yaml)
+techniques: []

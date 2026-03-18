@@ -1,0 +1,24 @@
+# Quick Scan Profile — fast, low-noise checks only
+#
+# Targets the most common and fastest-to-detect misconfigurations.
+# No simulation, no active scanning, no brute force.
+
+name: "quick"
+description: "Fast passive scan of high-value security controls"
+simulate: false
+
+tactics:
+  - "Discovery"
+  - "Credential Access"
+  - "Defense Evasion"
+
+# Only run these techniques (subset of each tactic)
+techniques:
+  - T1082    # System Information Discovery
+  - T1087    # Account Discovery
+  - T1003.001  # LSASS Memory protection check
+  - T1552.001  # Credentials in Files
+  - T1562.001  # Disable/Modify Security Tools (AV/EDR status)
+  - T1059.001  # PowerShell policy audit
+  - T1547.001  # Registry Run Keys audit
+  - T1548.002  # UAC Bypass checks

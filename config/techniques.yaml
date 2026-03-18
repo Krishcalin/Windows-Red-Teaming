@@ -1,0 +1,98 @@
+# Windows Red Teaming — Technique Enable/Disable Configuration
+#
+# Set techniques to true (enabled) or false (disabled).
+# Techniques not listed here default to enabled.
+# Use scan profiles (config/profiles/) for pre-built selections.
+
+techniques:
+  # --- Reconnaissance (TA0043) ---
+  T1595: true      # Active Scanning
+  T1592: true      # Gather Victim Host Information
+
+  # --- Initial Access (TA0001) ---
+  T1078: true      # Valid Accounts
+  T1190: true      # Exploit Public-Facing Application
+
+  # --- Execution (TA0002) ---
+  T1059: true      # Command and Scripting Interpreter
+  T1059.001: true  # PowerShell
+  T1059.003: true  # Windows Command Shell
+  T1047: true      # Windows Management Instrumentation
+  T1053: true      # Scheduled Task/Job
+  T1053.005: true  # Scheduled Task
+  T1106: true      # Native API
+
+  # --- Persistence (TA0003) ---
+  T1547: true      # Boot or Logon Autostart Execution
+  T1547.001: true  # Registry Run Keys
+  T1136: true      # Create Account
+  T1546: true      # Event Triggered Execution
+  T1546.001: true  # Change Default File Association
+
+  # --- Privilege Escalation (TA0004) ---
+  T1134: true      # Access Token Manipulation
+  T1055: true      # Process Injection
+  T1548: true      # Abuse Elevation Control Mechanism
+  T1548.002: true  # Bypass User Account Control
+  T1574: true      # Hijack Execution Flow
+  T1574.001: true  # DLL Search Order Hijacking
+  T1574.002: true  # DLL Side-Loading
+
+  # --- Defense Evasion (TA0005) ---
+  T1562: true      # Impair Defenses
+  T1562.001: true  # Disable or Modify Tools
+  T1562.002: true  # Disable Windows Event Logging
+  T1036: true      # Masquerading
+  T1070: true      # Indicator Removal
+  T1070.001: true  # Clear Windows Event Logs
+  T1027: true      # Obfuscated Files or Information
+
+  # --- Credential Access (TA0006) ---
+  T1003: true      # OS Credential Dumping
+  T1003.001: true  # LSASS Memory
+  T1003.002: true  # Security Account Manager
+  T1003.003: true  # NTDS
+  T1558: true      # Steal or Forge Kerberos Tickets
+  T1558.003: true  # Kerberoasting
+  T1110: true      # Brute Force
+  T1552: true      # Unsecured Credentials
+  T1552.001: true  # Credentials In Files
+
+  # --- Discovery (TA0007) ---
+  T1087: true      # Account Discovery
+  T1082: true      # System Information Discovery
+  T1046: true      # Network Service Discovery
+  T1083: true      # File and Directory Discovery
+  T1057: true      # Process Discovery
+  T1049: true      # System Network Connections Discovery
+  T1016: true      # System Network Configuration Discovery
+  T1069: true      # Permission Groups Discovery
+
+  # --- Lateral Movement (TA0008) ---
+  T1021: true      # Remote Services
+  T1021.001: true  # Remote Desktop Protocol
+  T1021.002: true  # SMB/Windows Admin Shares
+  T1021.006: true  # Windows Remote Management
+  T1550: true      # Use Alternate Authentication Material
+  T1550.002: true  # Pass the Hash
+  T1570: true      # Lateral Tool Transfer
+
+  # --- Collection (TA0009) ---
+  T1113: true      # Screen Capture
+  T1560: true      # Archive Collected Data
+  T1074: true      # Data Staged
+
+  # --- Command and Control (TA0011) ---
+  T1071: true      # Application Layer Protocol
+  T1071.001: true  # Web Protocols
+  T1573: true      # Encrypted Channel
+  T1090: true      # Proxy
+
+  # --- Exfiltration (TA0010) ---
+  T1048: true      # Exfiltration Over Alternative Protocol
+  T1041: true      # Exfiltration Over C2 Channel
+
+  # --- Impact (TA0040) ---
+  T1489: true      # Service Stop
+  T1486: true      # Data Encrypted for Impact
+  T1529: true      # System Shutdown/Reboot

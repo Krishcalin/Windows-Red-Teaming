@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "windows-red-teaming"
+version = "1.0.0"
+description = "Python-based active scanning tool for red team security testing on Windows systems, aligned with MITRE ATT&CK Framework"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Krishnendu"},
+]
+
+dependencies = [
+    "impacket>=0.11.0",
+    "pypsrp>=0.8.0",
+    "mitreattack-python",
+    "click>=8.0",
+    "pyyaml>=6.0",
+    "jinja2>=3.1",
+    "rich>=13.0",
+    "structlog>=23.0",
+    "cryptography>=41.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-mock>=3.0",
+]
+windows = [
+    "pywin32>=306",
+]
+
+[project.scripts]
+redteam = "main:cli"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.setuptools.packages.find]
+include = ["core*", "modules*"]

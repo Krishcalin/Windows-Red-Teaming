@@ -1,0 +1,18 @@
+# Stealth Scan Profile — minimal footprint, passive only
+#
+# Designed for environments with active monitoring/EDR where
+# low noise is critical. Only read-only registry and WMI checks.
+
+name: "stealth"
+description: "Minimal-footprint passive checks to avoid detection"
+simulate: false
+
+tactics:
+  - "Discovery"
+  - "Defense Evasion"
+
+techniques:
+  - T1082    # System Information Discovery
+  - T1562.001  # AV/EDR status check
+  - T1562.002  # Event logging status
+  - T1016    # Network Configuration Discovery
