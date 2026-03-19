@@ -1,25 +1,19 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows">
-  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python 3.10+">
-  <img src="https://img.shields.io/badge/Framework-MITRE%20ATT%26CK-E4002B?style=for-the-badge" alt="MITRE ATT&CK">
-  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License">
+  <img src="docs/banner.svg" alt="Windows Red Teaming — MITRE ATT&CK Security Scanner" width="900"/>
 </p>
 
-<br>
-
-```
- __        __ _             _                       ____           _   _____                    _
- \ \      / /(_) _ __    __| |  ___  __      __ ___|  _ \  ___  __| | |_   _|___   __ _  _ __ ___ (_) _ __    __ _
-  \ \ /\ / / | || '_ \  / _` | / _ \ \ \ /\ / // __|| |_) |/ _ \/ _` |   | | / _ \ / _` || '_ ` _ \| || '_ \  / _` |
-   \ V  V /  | || | | || (_| || (_) | \ V  V / \__ \|  _ <|  __/ (_| |   | ||  __/| (_| || | | | | || || | | || (_| |
-    \_/\_/   |_||_| |_| \__,_| \___/   \_/\_/  |___/|_| \_\\___|\__,_|   |_| \___| \__,_||_| |_| |_||_||_| |_| \__, |
-                                                                                                                  |___/
-```
-
-<h3 align="center">MITRE ATT&CK-Aligned Red Team Security Scanner for Windows</h3>
+<p align="center">
+  <strong>Active scanning tool for authorized red team security assessments on Windows<br/>
+  aligned with the MITRE ATT&CK Framework — 29 techniques across 7 tactics</strong>
+</p>
 
 <p align="center">
-  <strong>29 technique modules</strong> | <strong>13 MITRE ATT&CK tactics</strong> | <strong>7 active tactics implemented</strong> | <strong>85 unit tests</strong>
+  <img src="https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square&logo=python&logoColor=white"/>
+  <img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square"/>
+  <img src="https://img.shields.io/badge/techniques-29-ef4444?style=flat-square"/>
+  <img src="https://img.shields.io/badge/tactics-7-f59e0b?style=flat-square"/>
+  <img src="https://img.shields.io/badge/tests-85_passing-22c55e?style=flat-square"/>
+  <img src="https://img.shields.io/badge/MITRE_ATT%26CK-13_tactics-dc2626?style=flat-square"/>
 </p>
 
 ---

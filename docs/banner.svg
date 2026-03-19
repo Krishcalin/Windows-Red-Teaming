@@ -1,0 +1,269 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 320">
+  <defs>
+    <!-- Deep dark base with blue-red split -->
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#06080e"/>
+      <stop offset="25%" style="stop-color:#0a0612"/>
+      <stop offset="50%" style="stop-color:#0e0818"/>
+      <stop offset="75%" style="stop-color:#0c0614"/>
+      <stop offset="100%" style="stop-color:#08060f"/>
+    </linearGradient>
+    <!-- Threat spectrum: red → crimson → amber → crimson → red -->
+    <linearGradient id="threatBar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#dc2626"/>
+      <stop offset="25%" style="stop-color:#ef4444"/>
+      <stop offset="50%" style="stop-color:#f59e0b"/>
+      <stop offset="75%" style="stop-color:#ef4444"/>
+      <stop offset="100%" style="stop-color:#dc2626"/>
+    </linearGradient>
+    <!-- Shield icon gradients -->
+    <linearGradient id="shieldFill" x1="50%" y1="0%" x2="50%" y2="100%">
+      <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.12"/>
+      <stop offset="100%" style="stop-color:#dc2626;stop-opacity:0.02"/>
+    </linearGradient>
+    <linearGradient id="shieldStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ef4444"/>
+      <stop offset="50%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#ef4444"/>
+    </linearGradient>
+    <!-- MITRE diamond gradient -->
+    <linearGradient id="diamondStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ef4444"/>
+      <stop offset="50%" style="stop-color:#f59e0b"/>
+      <stop offset="100%" style="stop-color:#ef4444"/>
+    </linearGradient>
+    <!-- Orbit ring gradient -->
+    <linearGradient id="orbitGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.3"/>
+      <stop offset="50%" style="stop-color:#0078D6;stop-opacity:0.15"/>
+      <stop offset="100%" style="stop-color:#ef4444;stop-opacity:0.3"/>
+    </linearGradient>
+    <!-- Hexagonal grid pattern -->
+    <pattern id="hexgrid" x="0" y="0" width="30" height="26" patternUnits="userSpaceOnUse">
+      <path d="M15 0 L30 7.5 L30 18.5 L15 26 L0 18.5 L0 7.5 Z" fill="none" stroke="#ef4444" stroke-width="0.15" opacity="0.04"/>
+    </pattern>
+    <!-- Scan line pattern -->
+    <pattern id="scanlines" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="3" x2="4" y2="3" stroke="#ef4444" stroke-width="0.1" opacity="0.025"/>
+    </pattern>
+    <!-- Glows -->
+    <radialGradient id="glowCenter" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#ef4444;stop-opacity:0.08"/>
+      <stop offset="100%" style="stop-color:#ef4444;stop-opacity:0"/>
+    </radialGradient>
+    <radialGradient id="glowBlue" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#0078D6;stop-opacity:0.04"/>
+      <stop offset="100%" style="stop-color:#0078D6;stop-opacity:0"/>
+    </radialGradient>
+    <!-- Filters -->
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="sharpGlow">
+      <feGaussianBlur stdDeviation="1.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="clip"><rect width="900" height="320" rx="16"/></clipPath>
+  </defs>
+
+  <!-- ═══ Base Layers ═══ -->
+  <rect width="900" height="320" rx="16" fill="url(#bg)"/>
+  <rect width="900" height="320" rx="16" fill="url(#hexgrid)" clip-path="url(#clip)"/>
+  <rect width="900" height="320" rx="16" fill="url(#scanlines)" clip-path="url(#clip)"/>
+
+  <!-- Threat spectrum top bar -->
+  <rect width="900" height="3" rx="1.5" fill="url(#threatBar)" clip-path="url(#clip)"/>
+
+  <!-- Ambient glows -->
+  <ellipse cx="110" cy="160" rx="150" ry="140" fill="url(#glowCenter)"/>
+  <ellipse cx="700" cy="110" rx="200" ry="130" fill="url(#glowBlue)"/>
+
+  <!-- ═══ Central Icon: Shield + MITRE Diamond + Attack Orbits ═══ -->
+  <g transform="translate(110, 160)" filter="url(#softGlow)">
+
+    <!-- Outer orbit rings (attack path inspired) -->
+    <ellipse cx="0" cy="0" rx="88" ry="52" fill="none" stroke="url(#orbitGrad)" stroke-width="0.6"
+             transform="rotate(-25)"/>
+    <ellipse cx="0" cy="0" rx="88" ry="52" fill="none" stroke="url(#orbitGrad)" stroke-width="0.6"
+             transform="rotate(35)"/>
+    <ellipse cx="0" cy="0" rx="88" ry="52" fill="none" stroke="url(#orbitGrad)" stroke-width="0.5"
+             transform="rotate(95)"/>
+
+    <!-- Radar concentric circles -->
+    <circle cx="0" cy="0" r="30" fill="none" stroke="#ef4444" stroke-width="0.4" opacity="0.15"/>
+    <circle cx="0" cy="0" r="50" fill="none" stroke="#ef4444" stroke-width="0.3" opacity="0.10"/>
+    <circle cx="0" cy="0" r="70" fill="none" stroke="#ef4444" stroke-width="0.2" opacity="0.06"/>
+
+    <!-- Shield shape -->
+    <path d="M0 -48 L38 -30 L38 10 C38 35 20 50 0 58 C-20 50 -38 35 -38 10 L-38 -30 Z"
+          fill="url(#shieldFill)" stroke="url(#shieldStroke)" stroke-width="2"/>
+
+    <!-- Inner crosshair -->
+    <line x1="-20" y1="0" x2="20" y2="0" stroke="#f59e0b" stroke-width="0.5" opacity="0.3"/>
+    <line x1="0" y1="-20" x2="0" y2="20" stroke="#f59e0b" stroke-width="0.5" opacity="0.3"/>
+
+    <!-- "29" number (module count) -->
+    <text x="0" y="4" font-family="'Courier New', monospace" font-size="24" fill="#ef4444"
+          text-anchor="middle" font-weight="700" filter="url(#sharpGlow)">29</text>
+    <text x="0" y="20" font-family="'Segoe UI', sans-serif" font-size="7.5" fill="#94a3b8"
+          text-anchor="middle" letter-spacing="2.5">MODULES</text>
+
+    <!-- Attack path electron dots -->
+    <circle cx="-72" cy="-32" r="3" fill="#ef4444" opacity="0.7"/>
+    <circle cx="58" cy="44" r="2.5" fill="#0078D6" opacity="0.6"/>
+    <circle cx="-18" cy="-68" r="2" fill="#ef4444" opacity="0.5"/>
+    <circle cx="75" cy="-12" r="2.5" fill="#f59e0b" opacity="0.5"/>
+    <circle cx="-55" cy="52" r="2" fill="#0078D6" opacity="0.4"/>
+
+    <!-- Threat detection blips -->
+    <circle cx="16" cy="-14" r="1.5" fill="#f59e0b" opacity="0.6"/>
+    <circle cx="-10" cy="12" r="1.2" fill="#ef4444" opacity="0.5"/>
+
+    <!-- Coverage arc -->
+    <path d="M-52 -8 A52 52 0 1 1 -51 8" fill="none" stroke="#f59e0b" stroke-width="2.5"
+          stroke-linecap="round" opacity="0.35"/>
+  </g>
+
+  <!-- ═══ Text Content ═══ -->
+
+  <!-- MITRE ATT&CK Framework badge -->
+  <g transform="translate(240, 35)">
+    <rect x="0" y="0" width="166" height="26" rx="13"
+          fill="rgba(239,68,68,0.08)" stroke="#ef4444" stroke-width="0.8"/>
+    <text x="83" y="18" font-family="'Courier New', monospace" font-size="12" fill="#ef4444"
+          text-anchor="middle" font-weight="700">MITRE ATT&amp;CK</text>
+  </g>
+  <!-- Windows label -->
+  <text x="416" y="54" font-family="'Courier New', monospace" font-size="10"
+        fill="#0078D6" letter-spacing="3" opacity="0.6">WINDOWS</text>
+
+  <!-- Main title line 1 -->
+  <text x="240" y="100" font-family="'Segoe UI', 'Helvetica Neue', sans-serif"
+        font-size="34" font-weight="700" fill="#f1f5f9" letter-spacing="-0.5">Windows</text>
+  <text x="378" y="100" font-family="'Segoe UI', 'Helvetica Neue', sans-serif"
+        font-size="34" font-weight="700" fill="#ef4444" letter-spacing="-0.5">Red Teaming</text>
+
+  <!-- Main title line 2 -->
+  <text x="240" y="132" font-family="'Courier New', monospace"
+        font-size="18" font-weight="700" fill="#f59e0b" letter-spacing="1">Security Scanner</text>
+
+  <!-- Subtitle -->
+  <text x="240" y="158" font-family="'Segoe UI', sans-serif" font-size="12" fill="#94a3b8">
+    Active scanning tool for authorized red team assessments — 7 tactics, 29 techniques</text>
+
+  <!-- Separator -->
+  <line x1="240" y1="172" x2="660" y2="172" stroke="#1e293b" stroke-width="1"/>
+
+  <!-- OS platform labels with colored dots -->
+  <g transform="translate(240, 192)">
+    <!-- Windows 10 -->
+    <circle cx="5" cy="-3" r="3" fill="#0078D6" opacity="0.7"/>
+    <text x="14" y="0" font-family="'Segoe UI', sans-serif" font-size="11" fill="#94a3b8">Win 10</text>
+    <circle cx="64" cy="-3" r="1.3" fill="#334155"/>
+    <!-- Windows 11 -->
+    <circle cx="74" cy="-3" r="3" fill="#0078D6" opacity="0.7"/>
+    <text x="83" y="0" font-family="'Segoe UI', sans-serif" font-size="11" fill="#94a3b8">Win 11</text>
+    <circle cx="132" cy="-3" r="1.3" fill="#334155"/>
+    <!-- Server 2019 -->
+    <circle cx="142" cy="-3" r="3" fill="#22c55e" opacity="0.7"/>
+    <text x="151" y="0" font-family="'Segoe UI', sans-serif" font-size="11" fill="#94a3b8">Server 2019</text>
+    <circle cx="230" cy="-3" r="1.3" fill="#334155"/>
+    <!-- Server 2022 -->
+    <circle cx="240" cy="-3" r="3" fill="#22c55e" opacity="0.7"/>
+    <text x="249" y="0" font-family="'Segoe UI', sans-serif" font-size="11" fill="#94a3b8">Server 2022</text>
+  </g>
+
+  <!-- Tactic badges row 1 -->
+  <g transform="translate(240, 212)">
+    <rect x="0" y="0" width="100" height="22" rx="4"
+          fill="rgba(239,68,68,0.06)" stroke="#ef4444" stroke-width="0.6" opacity="0.8"/>
+    <text x="50" y="15" font-family="monospace" font-size="8" fill="#ef4444" text-anchor="middle">Reconnaissance</text>
+
+    <rect x="108" y="0" width="78" height="22" rx="4"
+          fill="rgba(59,130,246,0.06)" stroke="#3b82f6" stroke-width="0.6" opacity="0.8"/>
+    <text x="147" y="15" font-family="monospace" font-size="8" fill="#3b82f6" text-anchor="middle">Discovery</text>
+
+    <rect x="194" y="0" width="108" height="22" rx="4"
+          fill="rgba(245,158,11,0.06)" stroke="#f59e0b" stroke-width="0.6" opacity="0.8"/>
+    <text x="248" y="15" font-family="monospace" font-size="8" fill="#f59e0b" text-anchor="middle">Credential Access</text>
+
+    <rect x="310" y="0" width="108" height="22" rx="4"
+          fill="rgba(168,85,247,0.06)" stroke="#a855f7" stroke-width="0.6" opacity="0.8"/>
+    <text x="364" y="15" font-family="monospace" font-size="8" fill="#a855f7" text-anchor="middle">Priv Escalation</text>
+  </g>
+
+  <!-- Tactic badges row 2 -->
+  <g transform="translate(240, 242)">
+    <rect x="0" y="0" width="78" height="22" rx="4"
+          fill="rgba(236,72,153,0.06)" stroke="#ec4899" stroke-width="0.6" opacity="0.8"/>
+    <text x="39" y="15" font-family="monospace" font-size="8" fill="#ec4899" text-anchor="middle">Execution</text>
+
+    <rect x="86" y="0" width="88" height="22" rx="4"
+          fill="rgba(6,182,212,0.06)" stroke="#06b6d4" stroke-width="0.6" opacity="0.8"/>
+    <text x="130" y="15" font-family="monospace" font-size="8" fill="#06b6d4" text-anchor="middle">Persistence</text>
+
+    <rect x="182" y="0" width="108" height="22" rx="4"
+          fill="rgba(34,197,94,0.06)" stroke="#22c55e" stroke-width="0.6" opacity="0.8"/>
+    <text x="236" y="15" font-family="monospace" font-size="8" fill="#22c55e" text-anchor="middle">Defense Evasion</text>
+
+    <rect x="298" y="0" width="78" height="22" rx="4"
+          fill="rgba(100,116,139,0.1)" stroke="#475569" stroke-width="0.6" opacity="0.5"/>
+    <text x="337" y="15" font-family="monospace" font-size="8" fill="#475569" text-anchor="middle">+6 planned</text>
+  </g>
+
+  <!-- ═══ Right Side Stats ═══ -->
+
+  <!-- Version pill -->
+  <g transform="translate(770, 40)">
+    <rect x="0" y="0" width="84" height="30" rx="15"
+          fill="rgba(239,68,68,0.07)" stroke="#ef4444" stroke-width="0.8"/>
+    <text x="42" y="20" font-family="monospace" font-size="14" fill="#ef4444"
+          text-anchor="middle" font-weight="700">v1.0</text>
+  </g>
+
+  <!-- Stat: Techniques -->
+  <g transform="translate(740, 90)">
+    <rect x="0" y="0" width="130" height="38" rx="6"
+          fill="rgba(15,23,42,0.65)" stroke="#1e293b" stroke-width="0.6"/>
+    <text x="14" y="26" font-family="monospace" font-size="22" fill="#ef4444" font-weight="700">29</text>
+    <text x="52" y="26" font-family="'Segoe UI', sans-serif" font-size="11" fill="#64748b">techniques</text>
+  </g>
+
+  <!-- Stat: Tactics -->
+  <g transform="translate(740, 138)">
+    <rect x="0" y="0" width="130" height="38" rx="6"
+          fill="rgba(15,23,42,0.65)" stroke="#1e293b" stroke-width="0.6"/>
+    <text x="14" y="26" font-family="monospace" font-size="22" fill="#f59e0b" font-weight="700">7</text>
+    <text x="34" y="26" font-family="'Segoe UI', sans-serif" font-size="11" fill="#64748b">ATT&amp;CK tactics</text>
+  </g>
+
+  <!-- Stat: Tests -->
+  <g transform="translate(740, 186)">
+    <rect x="0" y="0" width="130" height="38" rx="6"
+          fill="rgba(15,23,42,0.65)" stroke="#1e293b" stroke-width="0.6"/>
+    <text x="14" y="26" font-family="monospace" font-size="22" fill="#3b82f6" font-weight="700">85</text>
+    <text x="55" y="26" font-family="'Segoe UI', sans-serif" font-size="11" fill="#64748b">unit tests</text>
+  </g>
+
+  <!-- Stat: OS Targets -->
+  <g transform="translate(740, 234)">
+    <rect x="0" y="0" width="130" height="38" rx="6"
+          fill="rgba(15,23,42,0.65)" stroke="#1e293b" stroke-width="0.6"/>
+    <text x="14" y="26" font-family="monospace" font-size="22" fill="#22c55e" font-weight="700">4</text>
+    <text x="34" y="26" font-family="'Segoe UI', sans-serif" font-size="11" fill="#64748b">Windows targets</text>
+  </g>
+
+  <!-- Connection mode labels (bottom right) -->
+  <g transform="translate(748, 284)">
+    <circle cx="5" cy="-2" r="2.5" fill="#0078D6" opacity="0.6"/>
+    <text x="13" y="1" font-family="monospace" font-size="8" fill="#64748b">Local</text>
+    <circle cx="50" cy="-2" r="2.5" fill="#f59e0b" opacity="0.6"/>
+    <text x="58" y="1" font-family="monospace" font-size="8" fill="#64748b">WinRM</text>
+    <circle cx="100" cy="-2" r="2.5" fill="#475569" opacity="0.4"/>
+    <text x="108" y="1" font-family="monospace" font-size="8" fill="#475569">SMB</text>
+  </g>
+
+  <!-- Bottom accent bar -->
+  <rect y="316" width="900" height="4" rx="2" fill="url(#threatBar)" clip-path="url(#clip)" opacity="0.25"/>
+</svg>
