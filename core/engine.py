@@ -90,7 +90,7 @@ class ScanEngine:
         ):
             if ispkg:
                 continue
-            if modname.endswith("base") or modname.endswith("__init__"):
+            if modname.endswith(".base") or modname.endswith(".__init__"):
                 continue
 
             try:
