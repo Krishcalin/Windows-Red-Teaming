@@ -1,0 +1,57 @@
+attack_technique: T1059.003
+display_name: "Command and Scripting Interpreter: Windows Command Shell"
+tactic: Execution
+atomic_tests:
+  - name: "Command Shell Execution via cmd.exe"
+    auto_generated_guid: b8b9b0b1c2c3d4d5e6e7f8f9a0a1b2b3
+    description: |
+      Tests cmd.exe execution and output redirection capabilities.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        cmd.exe /c "echo Command shell execution test & whoami & hostname"
+      elevation_required: false
+
+  - name: "Command Shell via /K persistent"
+    auto_generated_guid: c9c0c1c2d3d4e5e6f7f8a9a0b1b2c3c4
+    description: |
+      Tests cmd.exe /c with chained commands for recon.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        cmd.exe /c "whoami && ipconfig /all && net user && systeminfo | findstr /B /C:OS"
+      elevation_required: false
+
+  - name: "Batch Script Execution"
+    auto_generated_guid: d0d1d2d3e4e5f6f7a8a9b0b1c2c3d4d5
+    description: |
+      Creates and executes a batch script to demonstrate
+      script-based command execution.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        echo @echo off > %TEMP%\test_atomic.bat
+        echo whoami >> %TEMP%\test_atomic.bat
+        echo hostname >> %TEMP%\test_atomic.bat
+        %TEMP%\test_atomic.bat
+      cleanup_command: |
+        del /f %TEMP%\test_atomic.bat >nul 2>&1
+      elevation_required: false
+
+  - name: "For Loop Enumeration"
+    auto_generated_guid: e1e2e3e4f5f6a7a8b9b0c1c2d3d4e5e6
+    description: |
+      Uses for /f loops for data enumeration via cmd.exe.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        for /f "tokens=1,2,3" %a in ('netstat -ano ^| findstr ESTABLISHED') do @echo %a %b %c
+      elevation_required: false

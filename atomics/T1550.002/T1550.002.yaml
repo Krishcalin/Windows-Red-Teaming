@@ -1,0 +1,39 @@
+attack_technique: T1550.002
+display_name: "Use Alternate Authentication Material: Pass the Hash"
+tactic: Lateral Movement
+atomic_tests:
+  - name: "Pass the Hash Feasibility Check"
+    auto_generated_guid: d2d2e2f2a3b3c3d3e3f3a4b4c4d4e4f4
+    description: |
+      Checks system configuration for Pass the Hash vulnerability.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        # Check if LocalAccountTokenFilterPolicy allows PtH
+        $tokenFilter = Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -Name LocalAccountTokenFilterPolicy -ErrorAction SilentlyContinue
+        Write-Output "LocalAccountTokenFilterPolicy: $(if ($tokenFilter.LocalAccountTokenFilterPolicy -eq 1) {'ENABLED (PtH possible with local admins)'} else {'Disabled (default)'})"
+        # Check Credential Guard
+        $dg = Get-CimInstance -ClassName Win32_DeviceGuard -Namespace root/Microsoft/Windows/DeviceGuard -ErrorAction SilentlyContinue
+        Write-Output "Credential Guard: $(if ($dg.SecurityServicesRunning -contains 1) {'Running (PtH mitigated)'} else {'Not Running'})"
+        # Check WDigest
+        $wdigest = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\SecurityProviders\WDigest' -Name UseLogonCredential -ErrorAction SilentlyContinue
+        Write-Output "WDigest Caching: $(if ($wdigest.UseLogonCredential -eq 1) {'Enabled (cleartext creds in memory)'} else {'Disabled'})"
+        # Check NTLM restriction
+        $lmLevel = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Lsa' -Name LmCompatibilityLevel -ErrorAction SilentlyContinue
+        Write-Output "LM Compatibility: $($lmLevel.LmCompatibilityLevel) (5=NTLMv2 only)"
+      elevation_required: false
+
+  - name: "Restricted Admin Mode Check"
+    auto_generated_guid: e3e3f3a4b4c4d4e4f4a5b5c5d5e5f5a6
+    description: |
+      Checks if Restricted Admin mode is enabled for RDP PtH.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $ra = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Lsa' -Name DisableRestrictedAdmin -ErrorAction SilentlyContinue
+        Write-Output "Restricted Admin Disabled: $(if ($ra.DisableRestrictedAdmin -eq 0) {'No (Restricted Admin available - PtH via RDP possible)'} else {'Yes (Restricted Admin blocked)'})"
+      elevation_required: false

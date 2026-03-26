@@ -1,0 +1,60 @@
+attack_technique: T1021.002
+display_name: "Remote Services: SMB/Windows Admin Shares"
+tactic: Lateral Movement
+atomic_tests:
+  - name: "Admin Share Access Check"
+    auto_generated_guid: d6d6e6f6a7b7c7d7e7f7a8b8c8d8e8f8
+    description: |
+      Checks access to administrative shares (C$, ADMIN$, IPC$).
+    supported_platforms:
+      - windows
+    input_arguments:
+      target_host:
+        description: "Target IP or hostname"
+        type: string
+        default: "127.0.0.1"
+    executor:
+      name: command_prompt
+      command: |
+        net use \\#{target_host}\C$ 2>&1
+        net use \\#{target_host}\ADMIN$ 2>&1
+        net use \\#{target_host}\IPC$ 2>&1
+      cleanup_command: |
+        net use \\#{target_host}\C$ /delete >nul 2>&1
+        net use \\#{target_host}\ADMIN$ /delete >nul 2>&1
+        net use \\#{target_host}\IPC$ /delete >nul 2>&1
+      elevation_required: false
+
+  - name: "SMB Configuration Audit"
+    auto_generated_guid: e7e7f7a8b8c8d8e8f8a9b9c9d9e9f9a0
+    description: |
+      Checks SMB server configuration and signing requirements.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-SmbServerConfiguration | Select-Object EnableSMB1Protocol,EnableSMB2Protocol,RequireSecuritySignature,EncryptData,RejectUnencryptedAccess
+        Get-SmbClientConfiguration | Select-Object RequireSecuritySignature,EnableSecuritySignature
+      elevation_required: true
+
+  - name: "Copy File via Admin Share"
+    auto_generated_guid: f8f8a9b9c9d9e9f9a0b0c0d0e0f0a1b1
+    description: |
+      Copies a file to a remote admin share for lateral movement.
+    supported_platforms:
+      - windows
+    input_arguments:
+      target_host:
+        description: "Target hostname"
+        type: string
+        default: "localhost"
+    executor:
+      name: command_prompt
+      command: |
+        echo Atomic Test > %TEMP%\smb_test.txt
+        copy %TEMP%\smb_test.txt \\#{target_host}\C$\Windows\Temp\smb_test.txt
+      cleanup_command: |
+        del /f %TEMP%\smb_test.txt >nul 2>&1
+        del /f \\#{target_host}\C$\Windows\Temp\smb_test.txt >nul 2>&1
+      elevation_required: true

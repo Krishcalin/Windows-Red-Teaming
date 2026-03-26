@@ -1,0 +1,66 @@
+attack_technique: T1018
+display_name: "Remote System Discovery"
+tactic: Discovery
+atomic_tests:
+  - name: "Remote System Discovery via net view"
+    auto_generated_guid: a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5
+    description: |
+      Uses net view to discover remote systems on the network.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        net view
+        net view /domain
+      elevation_required: false
+
+  - name: "Active Directory Computer Enumeration"
+    auto_generated_guid: b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6
+    description: |
+      Enumerates domain computers via LDAP query.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $searcher = [adsisearcher]"(objectCategory=computer)"
+        $searcher.PropertiesToLoad.AddRange(@("cn","operatingsystem","lastlogontimestamp"))
+        $searcher.SizeLimit = 50
+        $searcher.FindAll() | ForEach-Object { "$($_.Properties['cn']) - $($_.Properties['operatingsystem'])" }
+      elevation_required: false
+
+  - name: "Ping Sweep via PowerShell"
+    auto_generated_guid: c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7
+    description: |
+      Performs a ping sweep of a local subnet.
+    supported_platforms:
+      - windows
+    input_arguments:
+      subnet:
+        description: "Subnet prefix (first 3 octets)"
+        type: string
+        default: "192.168.1"
+    executor:
+      name: powershell
+      command: |
+        1..254 | ForEach-Object { $ip = "#{subnet}.$_"; if (Test-Connection -ComputerName $ip -Count 1 -Quiet -TimeoutSeconds 1) { Write-Output "ALIVE: $ip" } }
+      elevation_required: false
+
+  - name: "NetBIOS Name Table Query"
+    auto_generated_guid: d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8
+    description: |
+      Uses nbtstat to query NetBIOS name tables on remote systems.
+    supported_platforms:
+      - windows
+    input_arguments:
+      target_host:
+        description: "Target IP"
+        type: string
+        default: "127.0.0.1"
+    executor:
+      name: command_prompt
+      command: |
+        nbtstat -A #{target_host}
+        nbtstat -n
+      elevation_required: false

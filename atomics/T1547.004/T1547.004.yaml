@@ -1,0 +1,37 @@
+attack_technique: T1547.004
+display_name: "Boot or Logon Autostart Execution: Winlogon Helper DLL"
+tactic: Persistence
+atomic_tests:
+  - name: "Winlogon Shell Modification"
+    auto_generated_guid: d6d6e6f6a7b7c7d7e7f7a8b8c8d8e8f8
+    description: |
+      Modifies Winlogon Shell registry value for persistence.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v Shell
+        reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v Userinit
+        reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v Notify
+      elevation_required: false
+
+  - name: "Add Winlogon Notify DLL"
+    auto_generated_guid: e7e7f7a8b8c8d8e8f8a9b9c9d9e9f9a0
+    description: |
+      Adds a Notify value to Winlogon for DLL persistence.
+    supported_platforms:
+      - windows
+    input_arguments:
+      dll_path:
+        description: "DLL path for notification package"
+        type: path
+        default: "C:\\Windows\\Temp\\atomic_test.dll"
+    executor:
+      name: command_prompt
+      command: |
+        reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AtomicNotify /t REG_SZ /d "#{dll_path}" /f
+        reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AtomicNotify
+      cleanup_command: |
+        reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AtomicNotify /f >nul 2>&1
+      elevation_required: true

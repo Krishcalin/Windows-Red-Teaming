@@ -1,0 +1,57 @@
+attack_technique: T1531
+display_name: "Account Access Removal"
+tactic: Impact
+atomic_tests:
+  - name: "Change User Password"
+    auto_generated_guid: d2d2e2f2a3b3c3d3e3f3a4b4c4d4e4f4
+    description: |
+      Changes a user account password (creates test account first).
+    supported_platforms:
+      - windows
+    input_arguments:
+      user_name:
+        description: "Test username"
+        type: string
+        default: "AtomicAccessTest"
+      password:
+        description: "Initial password"
+        type: string
+        default: "Atomic@Test123!"
+      new_password:
+        description: "New password"
+        type: string
+        default: "Changed@Pass456!"
+    executor:
+      name: command_prompt
+      command: |
+        net user #{user_name} #{password} /add
+        net user #{user_name} #{new_password}
+        echo Password changed for #{user_name}
+      cleanup_command: |
+        net user #{user_name} /delete >nul 2>&1
+      elevation_required: true
+
+  - name: "Disable User Account"
+    auto_generated_guid: e3e3f3a4b4c4d4e4f4a5b5c5d5e5f5a6
+    description: |
+      Disables a user account (creates test account first).
+    supported_platforms:
+      - windows
+    input_arguments:
+      user_name:
+        description: "Test username"
+        type: string
+        default: "AtomicDisableTest"
+      password:
+        description: "Initial password"
+        type: string
+        default: "Atomic@Test123!"
+    executor:
+      name: command_prompt
+      command: |
+        net user #{user_name} #{password} /add
+        net user #{user_name} /active:no
+        net user #{user_name} | findstr /C:"Account active"
+      cleanup_command: |
+        net user #{user_name} /delete >nul 2>&1
+      elevation_required: true

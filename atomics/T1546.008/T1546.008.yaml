@@ -1,0 +1,58 @@
+attack_technique: T1546.008
+display_name: "Event Triggered Execution: Accessibility Features"
+tactic: Persistence
+atomic_tests:
+  - name: "Sticky Keys Backdoor (sethc.exe)"
+    auto_generated_guid: a3a3b3c3d3e3f3a4b4c4d4e4f4a5b5c5
+    description: |
+      Replaces sethc.exe (Sticky Keys) with cmd.exe for RDP backdoor.
+      Checks if sethc.exe is the original or has been replaced.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $sethc = "$env:SystemRoot\System32\sethc.exe"
+        $cmd = "$env:SystemRoot\System32\cmd.exe"
+        $sethcHash = (Get-FileHash $sethc -ErrorAction SilentlyContinue).Hash
+        $cmdHash = (Get-FileHash $cmd).Hash
+        if ($sethcHash -eq $cmdHash) { Write-Output "WARNING: sethc.exe has been replaced with cmd.exe (Sticky Keys backdoor detected)" }
+        else { Write-Output "sethc.exe appears to be original (hash: $sethcHash)" }
+      elevation_required: false
+
+  - name: "Utilman.exe Backdoor Check"
+    auto_generated_guid: b4b4c4d4e4f4a5b5c5d5e5f5a6b6c6d6
+    description: |
+      Checks if utilman.exe has been replaced for accessibility backdoor.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $files = @("sethc.exe","utilman.exe","osk.exe","narrator.exe","magnify.exe")
+        $cmdHash = (Get-FileHash "$env:SystemRoot\System32\cmd.exe").Hash
+        $psHash = (Get-FileHash "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe").Hash
+        foreach ($f in $files) {
+          $path = "$env:SystemRoot\System32\$f"
+          if (Test-Path $path) {
+            $hash = (Get-FileHash $path).Hash
+            if ($hash -eq $cmdHash -or $hash -eq $psHash) { Write-Output "BACKDOOR: $f has been replaced!" }
+            else { Write-Output "OK: $f appears original" }
+          }
+        }
+      elevation_required: false
+
+  - name: "Image File Execution Options Debugger"
+    auto_generated_guid: c5c5d5e5f5a6b6c6d6e6f6a7b7c7d7e7
+    description: |
+      Sets IFEO debugger for sethc.exe to redirect to cmd.exe.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe" /v Debugger /t REG_SZ /d "cmd.exe" /f
+        reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe"
+      cleanup_command: |
+        reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\sethc.exe" /f >nul 2>&1
+      elevation_required: true

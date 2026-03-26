@@ -1,0 +1,45 @@
+attack_technique: T1135
+display_name: "Network Share Discovery"
+tactic: Discovery
+atomic_tests:
+  - name: "Local Network Shares via net share"
+    auto_generated_guid: e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9
+    description: |
+      Lists network shares on the local system.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        net share
+      elevation_required: false
+
+  - name: "Network Share Discovery via PowerShell"
+    auto_generated_guid: f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0
+    description: |
+      Enumerates SMB shares with access details.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-SmbShare | Select-Object Name,Path,Description,CurrentUsers
+        Get-SmbShareAccess -Name * -ErrorAction SilentlyContinue | Select-Object Name,AccountName,AccessRight
+      elevation_required: true
+
+  - name: "Remote Share Enumeration"
+    auto_generated_guid: a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1
+    description: |
+      Enumerates shares on a remote system.
+    supported_platforms:
+      - windows
+    input_arguments:
+      target_host:
+        description: "Target IP or hostname"
+        type: string
+        default: "127.0.0.1"
+    executor:
+      name: command_prompt
+      command: |
+        net view \\#{target_host}
+      elevation_required: false

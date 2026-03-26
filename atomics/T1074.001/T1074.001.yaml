@@ -1,0 +1,26 @@
+attack_technique: T1074.001
+display_name: "Data Staged: Local Data Staging"
+tactic: Collection
+atomic_tests:
+  - name: "Stage Collected Data to Temp Directory"
+    auto_generated_guid: a9a9b9c9d9e9f9a0b0c0d0e0f0a1b1c1
+    description: |
+      Creates a staging directory and copies interesting files to it.
+    supported_platforms:
+      - windows
+    input_arguments:
+      staging_dir:
+        description: "Staging directory path"
+        type: path
+        default: "%TEMP%\\atomic_staging"
+    executor:
+      name: powershell
+      command: |
+        $staging = "#{staging_dir}"
+        New-Item -Path $staging -ItemType Directory -Force | Out-Null
+        # Stage interesting files
+        Get-ChildItem -Path "$env:USERPROFILE\Desktop","$env:USERPROFILE\Documents" -Include *.docx,*.xlsx,*.pdf,*.txt -Recurse -ErrorAction SilentlyContinue | Select-Object -First 5 | Copy-Item -Destination $staging -ErrorAction SilentlyContinue
+        Write-Output "Staged files:"; Get-ChildItem $staging | Select-Object Name,Length
+      cleanup_command: |
+        Remove-Item "#{staging_dir}" -Recurse -Force -ErrorAction SilentlyContinue
+      elevation_required: false

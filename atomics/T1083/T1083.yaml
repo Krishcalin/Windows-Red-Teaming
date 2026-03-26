@@ -1,0 +1,44 @@
+attack_technique: T1083
+display_name: "File and Directory Discovery"
+tactic: Discovery
+atomic_tests:
+  - name: "File and Directory Listing via dir"
+    auto_generated_guid: a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9
+    description: |
+      Recursively lists files in common directories.
+    supported_platforms:
+      - windows
+    input_arguments:
+      search_path:
+        description: "Directory to search"
+        type: path
+        default: "C:\\Users"
+    executor:
+      name: command_prompt
+      command: |
+        dir #{search_path} /s /b /a:-d 2>nul | findstr /i ".doc .docx .xls .xlsx .pdf .pst .txt .cfg .conf .ini .kdbx" | head -50
+      elevation_required: false
+
+  - name: "Sensitive File Discovery via PowerShell"
+    auto_generated_guid: b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0
+    description: |
+      Searches for sensitive files using common extensions.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-ChildItem -Path C:\Users -Recurse -Include *.kdbx,*.key,*.pem,*.pfx,*.p12,*.ppk,*.id_rsa -ErrorAction SilentlyContinue | Select-Object FullName,Length,LastWriteTime -First 20
+      elevation_required: false
+
+  - name: "Password File Discovery"
+    auto_generated_guid: c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1
+    description: |
+      Searches for files with password-related names.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-ChildItem -Path C:\Users -Recurse -ErrorAction SilentlyContinue | Where-Object { $_.Name -match "pass|cred|login|secret|token|key" -and $_.Extension -match "\.(txt|csv|xml|json|ini|cfg|conf|yaml|yml)$" } | Select-Object FullName,Length -First 20
+      elevation_required: false

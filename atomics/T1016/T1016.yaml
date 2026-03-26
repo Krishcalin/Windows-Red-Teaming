@@ -1,0 +1,66 @@
+attack_technique: T1016
+display_name: "System Network Configuration Discovery"
+tactic: Discovery
+atomic_tests:
+  - name: "Network Configuration via ipconfig"
+    auto_generated_guid: e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2
+    description: |
+      Uses ipconfig /all to enumerate network configuration.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        ipconfig /all
+      elevation_required: false
+
+  - name: "DNS Configuration Discovery"
+    auto_generated_guid: f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3
+    description: |
+      Enumerates DNS client configuration and cache.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-DnsClientServerAddress | Select-Object InterfaceAlias,ServerAddresses
+        Get-DnsClientCache | Select-Object -First 20 Entry,Data,Type
+      elevation_required: false
+
+  - name: "Routing Table Discovery"
+    auto_generated_guid: a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4
+    description: |
+      Enumerates the routing table and ARP cache.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        route print
+        arp -a
+      elevation_required: false
+
+  - name: "Network Adapter Details via PowerShell"
+    auto_generated_guid: b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5
+    description: |
+      Uses PowerShell to enumerate network adapter configuration.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-NetAdapter | Select-Object Name,InterfaceDescription,Status,MacAddress,LinkSpeed
+        Get-NetIPAddress | Select-Object InterfaceAlias,IPAddress,PrefixLength,AddressFamily
+      elevation_required: false
+
+  - name: "Firewall Rules Enumeration"
+    auto_generated_guid: c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6
+    description: |
+      Enumerates Windows Firewall rules to find allowed connections.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-NetFirewallRule -Enabled True -Direction Inbound | Select-Object DisplayName,Direction,Action,Profile | Sort-Object DisplayName | Select-Object -First 30
+      elevation_required: false

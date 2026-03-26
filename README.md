@@ -4,15 +4,16 @@
 
 <p align="center">
   <strong>Active scanning tool for authorized red team security assessments on Windows<br/>
-  aligned with the MITRE ATT&CK Framework — 29 techniques across 7 tactics</strong>
+  aligned with the MITRE ATT&CK Framework — 90 techniques, 202 atomic tests across 13 tactics</strong>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square&logo=python&logoColor=white"/>
   <img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square"/>
-  <img src="https://img.shields.io/badge/techniques-29-ef4444?style=flat-square"/>
-  <img src="https://img.shields.io/badge/tactics-7-f59e0b?style=flat-square"/>
-  <img src="https://img.shields.io/badge/tests-85_passing-22c55e?style=flat-square"/>
+  <img src="https://img.shields.io/badge/techniques-90-ef4444?style=flat-square"/>
+  <img src="https://img.shields.io/badge/atomic_tests-202-dc2626?style=flat-square"/>
+  <img src="https://img.shields.io/badge/tactics-13-f59e0b?style=flat-square"/>
+  <img src="https://img.shields.io/badge/tests-122_passing-22c55e?style=flat-square"/>
   <img src="https://img.shields.io/badge/MITRE_ATT%26CK-13_tactics-dc2626?style=flat-square"/>
 </p>
 
@@ -33,55 +34,36 @@ The tool operates in two modes:
 
 ## Key Features
 
-- **29 technique modules** across 7 ATT&CK tactics with full check/simulate/cleanup lifecycle
-- **Module auto-discovery** -- drop a module in the right tactic folder, it's automatically picked up
+- **Dual-mode architecture** -- 29 Python modules (passive check + active simulate) + 202 YAML atomic tests across 61 techniques
+- **Atomic Red Team-style YAML tests** -- data-driven test definitions with input arguments, dependencies, cleanup commands, and executor types
+- **Module auto-discovery** -- drop a Python module or YAML atomic in the right folder, it's automatically picked up
 - **Session abstraction** -- Local (subprocess), Remote WinRM (pypsrp), with SMB/WMI planned
 - **ATT&CK Navigator export** -- generates JSON layer files for [ATT&CK Navigator](https://mitre-attack.github.io/attack-navigator/) visualization
 - **Multi-format reports** -- HTML (dark theme), JSON, CSV
 - **Evidence chain** -- every action logged with timestamps for audit trail
 - **Scan profiles** -- quick, full, stealth, or custom YAML profiles
 - **OS-aware execution** -- modules declare supported OS and auto-skip incompatible targets
+- **13 full MITRE ATT&CK tactics** -- Discovery, Execution, Persistence, Privilege Escalation, Defense Evasion, Credential Access, Lateral Movement, Collection, Command & Control, Exfiltration, Impact, Initial Access, Reconnaissance
 
 ---
 
 ## MITRE ATT&CK Coverage
 
-```
-+---------------------------+--------+--------------------------------------------------+
-| Tactic                    | ID     | Techniques Implemented                           |
-+---------------------------+--------+--------------------------------------------------+
-| Reconnaissance            | TA0043 | T1595 Active Scanning                            |
-+---------------------------+--------+--------------------------------------------------+
-| Discovery                 | TA0007 | T1082 System Info, T1087 Account Discovery,      |
-|                           |        | T1069 Permission Groups, T1046 Network Service,  |
-|                           |        | T1083 File/Directory, T1057 Process Discovery,   |
-|                           |        | T1049 Network Connections, T1016 Network Config  |
-+---------------------------+--------+--------------------------------------------------+
-| Credential Access         | TA0006 | T1003.001 LSASS Memory, T1003.002 SAM Database,  |
-|                           |        | T1003.003 NTDS.dit, T1558.003 Kerberoasting,     |
-|                           |        | T1552.001 Credentials in Files, T1110 Brute Force|
-+---------------------------+--------+--------------------------------------------------+
-| Privilege Escalation      | TA0004 | T1548.002 UAC Bypass, T1134 Token Manipulation,  |
-|                           |        | T1574.001 DLL Search Order, T1574.002 DLL Sideload|
-+---------------------------+--------+--------------------------------------------------+
-| Execution                 | TA0002 | T1059.001 PowerShell, T1059.003 Command Shell,   |
-|                           |        | T1047 WMI                                        |
-+---------------------------+--------+--------------------------------------------------+
-| Persistence               | TA0003 | T1053.005 Scheduled Tasks, T1547.001 Run Keys,   |
-|                           |        | T1546.001 File Associations                      |
-+---------------------------+--------+--------------------------------------------------+
-| Defense Evasion           | TA0005 | T1562.001 Disable Security Tools,                |
-|                           |        | T1562.002 Disable Event Logging,                 |
-|                           |        | T1036 Masquerading, T1070.001 Clear Event Logs   |
-+---------------------------+--------+--------------------------------------------------+
-| Lateral Movement          | TA0008 | Planned (Phase 5)                                |
-| Collection                | TA0009 | Planned (Phase 5)                                |
-| Command & Control         | TA0011 | Planned (Phase 5)                                |
-| Exfiltration              | TA0010 | Planned (Phase 5)                                |
-| Impact                    | TA0040 | Planned (Phase 5)                                |
-| Initial Access            | TA0001 | Planned                                          |
-+---------------------------+--------+--------------------------------------------------+
-```
+| Tactic | ID | Python Modules | Atomic YAML Tests | Total Techniques |
+|--------|-----|--------|--------|--------|
+| **Reconnaissance** | TA0043 | 1 | -- | 1 |
+| **Discovery** | TA0007 | 8 | 19 techniques, 73 tests | 19 |
+| **Execution** | TA0002 | 3 | 6 techniques, 24 tests | 6 |
+| **Persistence** | TA0003 | 3 | 7 techniques, 20 tests | 7 |
+| **Privilege Escalation** | TA0004 | 4 | 1 technique, 4 tests | 5 |
+| **Defense Evasion** | TA0005 | 4 | 4 techniques, 17 tests | 6 |
+| **Credential Access** | TA0006 | 6 | 6 techniques, 20 tests | 7 |
+| **Lateral Movement** | TA0008 | -- | 4 techniques, 12 tests | 4 |
+| **Collection** | TA0009 | -- | 5 techniques, 8 tests | 5 |
+| **Command & Control** | TA0011 | -- | 3 techniques, 9 tests | 3 |
+| **Exfiltration** | TA0010 | -- | 1 technique, 3 tests | 1 |
+| **Impact** | TA0040 | -- | 5 techniques, 12 tests | 5 |
+| **Total** | | **29 modules** | **61 techniques, 202 tests** | **~90 unique** |
 
 ---
 
@@ -118,8 +100,17 @@ python main.py scan --target localhost --technique T1082
 # Full scan with active simulation (requires explicit flag)
 python main.py scan --target 192.168.1.10 --profile full --simulate
 
-# List all discovered modules
+# List all discovered modules (Python + atomic YAML)
 python main.py list-modules
+
+# List only atomic YAML tests
+python main.py list-modules --source atomic
+
+# Run atomic tests for a specific technique
+python main.py run-atomic --target localhost --technique T1082
+
+# Run atomic tests with JSON output
+python main.py run-atomic --target localhost --technique T1059.001 --format json
 
 # Generate report from a previous scan
 python main.py report --input reports/scan_2026-03-16.json --format html
@@ -147,15 +138,17 @@ Windows-Red-Teaming/
 |
 |-- main.py                          # CLI entry point (click)
 |-- core/
-|   |-- engine.py                    # Scan orchestrator + module auto-discovery
+|   |-- engine.py                    # Scan orchestrator + module + atomic discovery
 |   |-- session.py                   # Local / WinRM session management
 |   |-- models.py                    # Target, Finding, ModuleResult, ScanResult
+|   |-- atomic_models.py             # AtomicTest, InputArgument, Dependency, Executor
+|   |-- atomic_runner.py             # YAML atomic test loader and runner
 |   |-- config.py                    # YAML config loader + profile merging
 |   |-- logger.py                    # Structured logging + evidence chain
 |   |-- reporter.py                  # HTML / JSON / CSV report generation
 |   +-- mitre_mapper.py             # ATT&CK Navigator JSON layer export
 |
-|-- modules/
+|-- modules/                         # Python modules (passive check + simulate)
 |   |-- base.py                      # BaseModule ABC (check/simulate/cleanup)
 |   |-- reconnaissance/              # TA0043 -- 1 module
 |   |-- discovery/                   # TA0007 -- 8 modules
@@ -163,12 +156,19 @@ Windows-Red-Teaming/
 |   |-- privilege_escalation/        # TA0004 -- 4 modules
 |   |-- execution/                   # TA0002 -- 3 modules
 |   |-- persistence/                 # TA0003 -- 3 modules
-|   |-- defense_evasion/             # TA0005 -- 4 modules
-|   |-- lateral_movement/            # TA0008 -- planned
-|   |-- collection/                  # TA0009 -- planned
-|   |-- command_and_control/         # TA0011 -- planned
-|   |-- exfiltration/                # TA0010 -- planned
-|   +-- impact/                      # TA0040 -- planned
+|   +-- defense_evasion/             # TA0005 -- 4 modules
+|
+|-- atomics/                         # YAML atomic tests (Atomic Red Team-style)
+|   |-- T1082/T1082.yaml            # 10 tests -- System Info Discovery
+|   |-- T1087.001/T1087.001.yaml    # 4 tests  -- Local Account Discovery
+|   |-- T1059.001/T1059.001.yaml    # 7 tests  -- PowerShell
+|   |-- T1547.001/T1547.001.yaml    # 4 tests  -- Registry Run Keys
+|   |-- T1562.001/T1562.001.yaml    # 6 tests  -- Disable Security Tools
+|   |-- T1003.001/T1003.001.yaml    # 4 tests  -- LSASS Memory
+|   |-- T1021.001/T1021.001.yaml    # 4 tests  -- RDP
+|   |-- T1105/T1105.yaml            # 5 tests  -- Ingress Tool Transfer
+|   |-- T1490/T1490.yaml            # 4 tests  -- Inhibit System Recovery
+|   +-- ... (61 techniques total, 202 atomic tests)
 |
 |-- config/
 |   |-- techniques.yaml              # Enable/disable techniques
@@ -180,7 +180,7 @@ Windows-Red-Teaming/
 |-- templates/
 |   +-- report.html                  # Jinja2 dark-themed HTML report
 |
-+-- tests/                           # 85 pytest tests
++-- tests/                           # 122 pytest tests
 ```
 
 ### Module Contract
@@ -206,6 +206,43 @@ class MyTechniqueCheck(BaseModule):
     def get_mitigations(self) -> list[str]:       # Remediation advice
         ...
 ```
+
+### Atomic Test YAML Format
+
+Atomic tests are defined in YAML files under `atomics/<technique_id>/`. Each file contains multiple tests for a single ATT&CK technique, inspired by [Atomic Red Team](https://github.com/redcanaryco/atomic-red-team):
+
+```yaml
+attack_technique: T1082
+display_name: "System Information Discovery"
+tactic: Discovery
+atomic_tests:
+  - name: "System Information via systeminfo"
+    auto_generated_guid: a0f7e4b1c2d3e4f5a6b7c8d9e0f1a2b3
+    description: |
+      Executes systeminfo to gather OS version and hardware details.
+    supported_platforms:
+      - windows
+    input_arguments:
+      output_file:
+        description: "Output file path"
+        type: path
+        default: "%TEMP%\\sysinfo.txt"
+    dependencies:
+      - description: "Tool must exist"
+        prereq_command: "where systeminfo"
+    executor:
+      name: command_prompt          # or: powershell, manual
+      command: |
+        systeminfo > #{output_file}
+      cleanup_command: |
+        del /f #{output_file} >nul 2>&1
+      elevation_required: false
+```
+
+**Execution modes:**
+- **check** -- Python modules run passive security audit (read-only)
+- **simulate** -- Python modules + YAML atomic tests execute against the target
+- **run-atomic** -- Run YAML atomic tests directly for a specific technique
 
 ---
 

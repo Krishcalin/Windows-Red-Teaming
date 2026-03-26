@@ -1,0 +1,39 @@
+attack_technique: T1007
+display_name: "System Service Discovery"
+tactic: Discovery
+atomic_tests:
+  - name: "Service Listing via sc query"
+    auto_generated_guid: c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5
+    description: |
+      Uses sc query to enumerate all services.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        sc query type= service state= all
+      elevation_required: false
+
+  - name: "Service Discovery via PowerShell"
+    auto_generated_guid: d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6
+    description: |
+      Uses Get-Service with details about running services.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-Service | Where-Object { $_.Status -eq 'Running' } | Select-Object Name,DisplayName,StartType | Sort-Object DisplayName
+      elevation_required: false
+
+  - name: "Service Executable Path Discovery"
+    auto_generated_guid: e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7
+    description: |
+      Enumerates service executable paths for hijacking opportunities.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-CimInstance Win32_Service | Where-Object { $_.State -eq 'Running' } | Select-Object Name,PathName,StartMode,StartName | Sort-Object Name
+      elevation_required: false

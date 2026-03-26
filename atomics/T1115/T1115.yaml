@@ -1,0 +1,17 @@
+attack_technique: T1115
+display_name: "Clipboard Data"
+tactic: Collection
+atomic_tests:
+  - name: "Capture Clipboard Contents"
+    auto_generated_guid: f8f8a9b9c9d9e9f9a0b0c0d0e0f0a1b1
+    description: |
+      Captures current clipboard contents using PowerShell.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Add-Type -AssemblyName System.Windows.Forms
+        $clip = [System.Windows.Forms.Clipboard]::GetText()
+        if ($clip) { Write-Output "Clipboard contains $($clip.Length) characters" } else { Write-Output "Clipboard is empty or contains non-text data" }
+      elevation_required: false

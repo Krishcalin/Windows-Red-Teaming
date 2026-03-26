@@ -191,45 +191,215 @@ def scan(
 
 
 @cli.command("list-modules")
-def list_modules() -> None:
-    """List all discovered technique modules."""
+@click.option(
+    "--source", "-s",
+    default="all",
+    type=click.Choice(["all", "python", "atomic"], case_sensitive=False),
+    help="Filter by module source (python, atomic, or all).",
+)
+def list_modules(source: str) -> None:
+    """List all discovered technique modules and atomic tests."""
     setup_logging(verbose=False)
 
     engine = ScanEngine()
 
-    table = Table(
-        title="Discovered Technique Modules",
-        show_header=True,
-        header_style="bold cyan",
-    )
-    table.add_column("Technique ID", style="bold")
-    table.add_column("Name")
-    table.add_column("Tactic")
-    table.add_column("Severity")
-    table.add_column("Admin?")
-    table.add_column("OS Support")
+    # Python modules table
+    if source in ("all", "python"):
+        py_table = Table(
+            title="Python Technique Modules (check + simulate)",
+            show_header=True,
+            header_style="bold cyan",
+        )
+        py_table.add_column("Technique ID", style="bold")
+        py_table.add_column("Name")
+        py_table.add_column("Tactic")
+        py_table.add_column("Severity")
+        py_table.add_column("Admin?")
+        py_table.add_column("OS Support")
 
-    for mod in engine.discovered_modules:
-        sev = mod["severity"]
-        sev_style = {
-            "CRITICAL": "red",
-            "HIGH": "dark_orange",
-            "MEDIUM": "yellow",
-            "LOW": "cyan",
-            "INFO": "dim",
-        }.get(sev, "white")
+        for mod in engine.discovered_modules:
+            sev = mod["severity"]
+            sev_style = {
+                "CRITICAL": "red",
+                "HIGH": "dark_orange",
+                "MEDIUM": "yellow",
+                "LOW": "cyan",
+                "INFO": "dim",
+            }.get(sev, "white")
 
-        table.add_row(
-            mod["technique_id"],
-            mod["technique_name"],
-            mod["tactic"],
-            f"[{sev_style}]{sev}[/{sev_style}]",
-            "Yes" if mod["requires_admin"] else "No",
-            ", ".join(mod["supported_os"]),
+            py_table.add_row(
+                mod["technique_id"],
+                mod["technique_name"],
+                mod["tactic"],
+                f"[{sev_style}]{sev}[/{sev_style}]",
+                "Yes" if mod["requires_admin"] else "No",
+                ", ".join(mod["supported_os"]),
+            )
+
+        console.print(py_table)
+        console.print(f"  Python modules: {len(engine.discovered_modules)}")
+
+    # Atomic YAML tests table
+    if source in ("all", "atomic"):
+        at_table = Table(
+            title="\nAtomic YAML Tests (simulate mode)",
+            show_header=True,
+            header_style="bold magenta",
+        )
+        at_table.add_column("Technique ID", style="bold")
+        at_table.add_column("Name")
+        at_table.add_column("Tactic")
+        at_table.add_column("Tests", justify="right")
+        at_table.add_column("Admin?")
+        at_table.add_column("Has Python?")
+
+        atomics = engine.discovered_atomics
+        for at in atomics:
+            at_table.add_row(
+                at["technique_id"],
+                at["display_name"],
+                at["tactic"],
+                str(at["windows_tests"]),
+                "Yes" if at["elevation_required"] else "No",
+                "[green]Yes[/green]" if at["technique_id"] in {
+                    m["technique_id"] for m in engine.discovered_modules
+                } else "[dim]No[/dim]",
+            )
+
+        console.print(at_table)
+        console.print(f"  Atomic techniques: {len(atomics)}")
+        total_tests = sum(at["windows_tests"] for at in atomics)
+        console.print(f"  Total atomic tests: {total_tests}")
+
+    # Summary
+    if source == "all":
+        py_ids = {m["technique_id"] for m in engine.discovered_modules}
+        at_ids = {at["technique_id"] for at in engine.discovered_atomics}
+        all_ids = py_ids | at_ids
+        console.print(
+            f"\n[bold]Total unique techniques: {len(all_ids)}[/bold] "
+            f"({len(py_ids)} Python + {len(at_ids)} atomic, "
+            f"{len(py_ids & at_ids)} overlap)"
         )
 
-    console.print(table)
-    console.print(f"\nTotal modules: {len(engine.discovered_modules)}")
+
+@cli.command("run-atomic")
+@click.option(
+    "--target", "-t",
+    required=True,
+    help="Target host (IP, hostname, or 'localhost').",
+)
+@click.option(
+    "--technique",
+    required=True,
+    help="MITRE ATT&CK technique ID (e.g. T1082).",
+)
+@click.option(
+    "--output", "-o",
+    default=None,
+    help="Output report filename.",
+)
+@click.option(
+    "--format", "-f", "output_format",
+    multiple=True,
+    type=click.Choice(["html", "json", "csv"], case_sensitive=False),
+    help="Report format(s).",
+)
+@click.option("--verbose", "-v", is_flag=True, help="Enable verbose output.")
+def run_atomic(
+    target: str,
+    technique: str,
+    output: str | None,
+    output_format: tuple[str, ...],
+    verbose: bool,
+) -> None:
+    """Run atomic YAML tests for a specific technique."""
+    from core.atomic_runner import AtomicRunner
+    from core.models import ConnectionMethod, Severity, Target as TargetModel
+
+    setup_logging(verbose=verbose)
+
+    # Authorization
+    console.print(ScanEngine.AUTHORIZATION_BANNER, style="bold yellow")
+    if not click.confirm("Do you have authorization to test this target?"):
+        console.print("[yellow]Aborted.[/yellow]")
+        sys.exit(0)
+
+    # Setup target
+    if target in ("localhost", "127.0.0.1", "::1"):
+        tgt = TargetModel(host=target, connection=ConnectionMethod.LOCAL)
+    else:
+        tgt = TargetModel(host=target, connection=ConnectionMethod.WINRM)
+
+    runner = AtomicRunner()
+    tech = runner.get_technique(technique)
+    if not tech:
+        console.print(f"[red]Technique {technique} not found in atomics/[/red]")
+        sys.exit(1)
+
+    tests = tech.windows_tests
+    console.print(
+        f"\n[bold cyan]Running {len(tests)} atomic test(s) for "
+        f"{technique} — {tech.display_name}[/bold cyan]"
+    )
+
+    from core.session import create_session
+
+    session = create_session(tgt)
+    session.connect()
+
+    try:
+        results = runner.run_technique(technique, session)
+
+        # Print results
+        for result in results:
+            status_style = "green" if result.status.value == "success" else "red"
+            console.print(
+                f"  [{status_style}]{result.status.value.upper()}[/{status_style}] "
+                f"{result.technique_name}"
+            )
+            for finding in result.findings:
+                sev = finding.severity.value
+                sev_style = {
+                    "CRITICAL": "red", "HIGH": "dark_orange",
+                    "MEDIUM": "yellow", "LOW": "cyan", "INFO": "dim",
+                }.get(sev, "white")
+                console.print(
+                    f"    [{sev_style}]{sev}[/{sev_style}] {finding.description}"
+                )
+
+        total = sum(len(r.findings) for r in results)
+        console.print(f"\n  Total findings: {total}")
+
+        # Generate reports
+        if output_format:
+            from core.models import ScanResult
+
+            scan_result = ScanResult(target=tgt, profile="atomic", simulate=True)
+            for r in results:
+                scan_result.add_module_result(r)
+            scan_result.complete()
+
+            reporter = Reporter()
+            for fmt in output_format:
+                match fmt.lower():
+                    case "json":
+                        path = reporter.generate_json(
+                            scan_result, f"{output}.json" if output else None
+                        )
+                        console.print(f"  JSON: [green]{path}[/green]")
+                    case "html":
+                        path = reporter.generate_html(
+                            scan_result, f"{output}.html" if output else None
+                        )
+                        console.print(f"  HTML: [green]{path}[/green]")
+                    case "csv":
+                        path = reporter.generate_csv(
+                            scan_result, f"{output}.csv" if output else None
+                        )
+                        console.print(f"  CSV:  [green]{path}[/green]")
+    finally:
+        session.disconnect()
 
 
 @cli.command()

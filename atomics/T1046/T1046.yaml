@@ -1,0 +1,61 @@
+attack_technique: T1046
+display_name: "Network Service Discovery"
+tactic: Discovery
+atomic_tests:
+  - name: "Port Scan via PowerShell Test-NetConnection"
+    auto_generated_guid: a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d7
+    description: |
+      Scans common ports on a target using Test-NetConnection.
+    supported_platforms:
+      - windows
+    input_arguments:
+      target_host:
+        description: "Target IP or hostname"
+        type: string
+        default: "127.0.0.1"
+    executor:
+      name: powershell
+      command: |
+        @(21,22,23,25,53,80,88,135,139,389,443,445,636,1433,3306,3389,5985,5986,8080,8443) | ForEach-Object { $result = Test-NetConnection -ComputerName #{target_host} -Port $_ -WarningAction SilentlyContinue -InformationLevel Quiet; Write-Output "Port $_`: $result" }
+      elevation_required: false
+
+  - name: "Service Discovery via netstat"
+    auto_generated_guid: b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e8
+    description: |
+      Uses netstat to discover listening services and open ports.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        netstat -ano | findstr LISTENING
+      elevation_required: false
+
+  - name: "Network Service Discovery via PowerShell"
+    auto_generated_guid: c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f9
+    description: |
+      Uses Get-NetTCPConnection to discover listening services.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-NetTCPConnection -State Listen | Select-Object LocalAddress,LocalPort,OwningProcess,@{Name='ProcessName';Expression={(Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue).ProcessName}} | Sort-Object LocalPort
+      elevation_required: false
+
+  - name: "SMB Share Enumeration on Target"
+    auto_generated_guid: d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a0
+    description: |
+      Discovers SMB shares on a remote target.
+    supported_platforms:
+      - windows
+    input_arguments:
+      target_host:
+        description: "Target IP or hostname"
+        type: string
+        default: "127.0.0.1"
+    executor:
+      name: command_prompt
+      command: |
+        net view \\#{target_host} /all
+      elevation_required: false

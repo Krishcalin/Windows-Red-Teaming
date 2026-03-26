@@ -1,0 +1,39 @@
+attack_technique: T1485
+display_name: "Data Destruction"
+tactic: Impact
+atomic_tests:
+  - name: "File Overwrite and Delete Simulation"
+    auto_generated_guid: d6d6e6f6a7b7c7d7e7f7a8b8c8d8e8f8
+    description: |
+      Creates test files and demonstrates overwrite-then-delete
+      pattern used by destructive malware.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        # Create test files
+        1..5 | ForEach-Object { Set-Content -Path "$env:TEMP\destroy_test_$_.txt" -Value "Original content $_" }
+        # Overwrite with random data (destruction simulation)
+        1..5 | ForEach-Object {
+          $bytes = New-Object byte[] 1024; (New-Object Random).NextBytes($bytes)
+          [IO.File]::WriteAllBytes("$env:TEMP\destroy_test_$_.txt", $bytes)
+          Write-Output "Overwritten: destroy_test_$_.txt"
+        }
+      cleanup_command: |
+        1..5 | ForEach-Object { Remove-Item "$env:TEMP\destroy_test_$_.txt" -Force -ErrorAction SilentlyContinue }
+      elevation_required: false
+
+  - name: "Cipher Wipe Free Space (Safe Test)"
+    auto_generated_guid: e7e7f7a8b8c8d8e8f8a9b9c9d9e9f9a0
+    description: |
+      Tests cipher.exe /w capability which overwrites free space.
+      Only creates and deletes a test file to verify the tool exists.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        cipher /? | findstr /C:"cipher /w"
+        echo cipher.exe wipe capability verified (not executed)
+      elevation_required: false

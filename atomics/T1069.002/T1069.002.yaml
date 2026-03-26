@@ -1,0 +1,44 @@
+attack_technique: T1069.002
+display_name: "Permission Groups Discovery: Domain Groups"
+tactic: Discovery
+atomic_tests:
+  - name: "Enumerate Domain Groups via net group"
+    auto_generated_guid: d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0
+    description: |
+      Lists all domain groups using net group.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        net group /domain
+      elevation_required: false
+
+  - name: "Enumerate Enterprise and Schema Admins"
+    auto_generated_guid: e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1
+    description: |
+      Enumerates high-privilege domain groups.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        net group "Enterprise Admins" /domain
+        net group "Schema Admins" /domain
+        net group "Domain Admins" /domain
+      elevation_required: false
+
+  - name: "Enumerate Domain Groups via LDAP"
+    auto_generated_guid: f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2
+    description: |
+      Uses LDAP DirectorySearcher to enumerate domain groups.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $searcher = [adsisearcher]"(objectCategory=group)"
+        $searcher.PropertiesToLoad.AddRange(@("cn","description","member"))
+        $searcher.SizeLimit = 100
+        $searcher.FindAll() | ForEach-Object { "$($_.Properties['cn']) - $($_.Properties['description'])" }
+      elevation_required: false

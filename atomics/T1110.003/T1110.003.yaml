@@ -1,0 +1,50 @@
+attack_technique: T1110.003
+display_name: "Brute Force: Password Spraying"
+tactic: Credential Access
+atomic_tests:
+  - name: "Account Lockout Policy Check"
+    auto_generated_guid: c9c9d9e9f9a0b0c0d0e0f0a1b1c1d1e1
+    description: |
+      Checks account lockout policy before password spray attempts.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        net accounts
+        net accounts /domain 2>nul
+      elevation_required: false
+
+  - name: "Password Policy Strength Assessment"
+    auto_generated_guid: d0d0e0f0a1b1c1d1e1f1a2b2c2d2e2f2
+    description: |
+      Assesses password policy strength for spray attack feasibility.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $policy = net accounts 2>&1
+        $lockout = ($policy | Select-String "Lockout threshold").ToString().Split(":")[1].Trim()
+        $minLen = ($policy | Select-String "Minimum password length").ToString().Split(":")[1].Trim()
+        $complexity = ($policy | Select-String "complexity").ToString().Split(":")[1].Trim() 2>$null
+        Write-Output "Lockout Threshold: $lockout"
+        Write-Output "Minimum Password Length: $minLen"
+        Write-Output "Complexity Requirement: $complexity"
+        if ($lockout -eq "Never" -or [int]$lockout -gt 5) { Write-Output "WARNING: Weak lockout policy - password spray feasible" }
+      elevation_required: false
+
+  - name: "NTLM Authentication Configuration Check"
+    auto_generated_guid: e1e1f1a2b2c2d2e2f2a3b3c3d3e3f3a4
+    description: |
+      Checks LAN Manager authentication level and NTLM restrictions.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $lmLevel = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Lsa' -Name LmCompatibilityLevel -ErrorAction SilentlyContinue
+        Write-Output "LM Compatibility Level: $($lmLevel.LmCompatibilityLevel) (5=NTLMv2 only, recommended)"
+        $ntlmRestrict = Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\MSV1_0' -Name RestrictSendingNTLMTraffic -ErrorAction SilentlyContinue
+        Write-Output "Restrict NTLM: $($ntlmRestrict.RestrictSendingNTLMTraffic)"
+      elevation_required: false

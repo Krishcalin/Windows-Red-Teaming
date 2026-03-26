@@ -1,0 +1,39 @@
+attack_technique: T1070.001
+display_name: "Indicator Removal: Clear Windows Event Logs"
+tactic: Defense Evasion
+atomic_tests:
+  - name: "Clear Security Event Log"
+    auto_generated_guid: e1e1f1a2b2c2d2e2f2a3b3c3d3e3f3a4
+    description: |
+      Clears the Security event log using wevtutil.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        wevtutil cl Security
+      elevation_required: true
+
+  - name: "Clear All Major Event Logs"
+    auto_generated_guid: f2f2a3b3c3d3e3f3a4b4c4d4e4f4a5b5
+    description: |
+      Clears Security, System, Application, and PowerShell logs.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        @("Security","System","Application","Windows PowerShell","Microsoft-Windows-PowerShell/Operational") | ForEach-Object { wevtutil cl $_ 2>$null; Write-Output "Cleared: $_" }
+      elevation_required: true
+
+  - name: "Clear Event Logs via PowerShell"
+    auto_generated_guid: a3a3b3c3d3e3f3a4b4c4d4e4f4a5b5c5
+    description: |
+      Uses Clear-EventLog PowerShell cmdlet.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Clear-EventLog -LogName Application,System -ErrorAction SilentlyContinue
+      elevation_required: true

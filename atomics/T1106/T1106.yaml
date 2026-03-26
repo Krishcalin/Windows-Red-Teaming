@@ -1,0 +1,32 @@
+attack_technique: T1106
+display_name: "Native API"
+tactic: Execution
+atomic_tests:
+  - name: "Native API Call via PowerShell Add-Type"
+    auto_generated_guid: e3e4e5e6f7f8a9a0b1b2c3c4d5d6e7e8
+    description: |
+      Uses PowerShell Add-Type to call Win32 APIs directly.
+      Tests ability to use P/Invoke for native API calls.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Add-Type -MemberDefinition '[DllImport("kernel32.dll")] public static extern IntPtr GetCurrentProcess();' -Name 'Kernel32' -Namespace 'Win32'
+        $handle = [Win32.Kernel32]::GetCurrentProcess()
+        Write-Output "Current process handle: $handle"
+      elevation_required: false
+
+  - name: "Native API Process Information"
+    auto_generated_guid: f4f5f6f7a8a9b0b1c2c3d4d5e6e7f8f9
+    description: |
+      Uses .NET interop to query process information via native API.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Add-Type -MemberDefinition '[DllImport("kernel32.dll")] public static extern uint GetCurrentProcessId();[DllImport("kernel32.dll")] public static extern bool IsDebuggerPresent();' -Name 'K32' -Namespace 'Win32'
+        Write-Output "PID: $([Win32.K32]::GetCurrentProcessId())"
+        Write-Output "Debugger Present: $([Win32.K32]::IsDebuggerPresent())"
+      elevation_required: false

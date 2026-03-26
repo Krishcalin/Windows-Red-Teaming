@@ -1,0 +1,44 @@
+attack_technique: T1033
+display_name: "System Owner/User Discovery"
+tactic: Discovery
+atomic_tests:
+  - name: "Current User Discovery via whoami"
+    auto_generated_guid: d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2
+    description: |
+      Uses whoami with various flags to enumerate the current user context.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        whoami
+        whoami /all
+        whoami /priv
+        whoami /groups
+      elevation_required: false
+
+  - name: "Logged-On Users Discovery"
+    auto_generated_guid: e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3
+    description: |
+      Enumerates currently logged-on users via query and qwinsta.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        query user
+        qwinsta
+      elevation_required: false
+
+  - name: "User SID and Token Information"
+    auto_generated_guid: f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4
+    description: |
+      Discovers user SID, token groups, and privilege information.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        [System.Security.Principal.WindowsIdentity]::GetCurrent() | Select-Object Name,User,AuthenticationType,IsAuthenticated,IsSystem
+        [System.Security.Principal.WindowsIdentity]::GetCurrent().Groups | ForEach-Object { $_.Translate([System.Security.Principal.NTAccount]).Value }
+      elevation_required: false

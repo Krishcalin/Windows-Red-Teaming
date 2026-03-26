@@ -1,8 +1,9 @@
 """Main orchestrator — loads modules, runs scans.
 
 The engine discovers technique modules at runtime by scanning the
-modules/ package tree, then executes them against targets based on
-the selected profile, tactic, or technique filters.
+modules/ package tree AND atomic YAML tests from the atomics/
+directory, then executes them against targets based on the selected
+profile, tactic, or technique filters.
 """
 
 from __future__ import annotations
@@ -17,6 +18,7 @@ from typing import Any
 import structlog
 
 import modules as modules_pkg
+from core.atomic_runner import AtomicRunner
 from core.logger import EvidenceLogger
 from core.models import (
     ModuleResult,
@@ -34,8 +36,8 @@ log = structlog.get_logger(component="engine")
 class ScanEngine:
     """Main scan orchestrator.
 
-    Discovers technique modules, applies filters, and executes them
-    against targets with evidence logging.
+    Discovers technique modules and atomic YAML tests, applies filters,
+    and executes them against targets with evidence logging.
     """
 
     # Authorization banner shown before every scan
@@ -62,6 +64,7 @@ class ScanEngine:
         evidence_dir: str = "evidence",
         enabled_techniques: set[str] | None = None,
         disabled_techniques: set[str] | None = None,
+        atomics_dir: Path | None = None,
     ) -> None:
         self.profile = profile
         self.simulate = simulate
@@ -74,6 +77,13 @@ class ScanEngine:
 
         self._modules: list[BaseModule] = []
         self._discover_modules()
+
+        # Atomic test runner (YAML-based tests)
+        self._atomic_runner = AtomicRunner(
+            atomics_dir=atomics_dir,
+            enabled_techniques=enabled_techniques,
+            disabled_techniques=disabled_techniques,
+        )
 
     def _discover_modules(self) -> None:
         """Auto-discover all technique modules under the modules/ package.
@@ -152,6 +162,10 @@ class ScanEngine:
     def scan(self, target: Target) -> ScanResult:
         """Execute a full scan against a target.
 
+        Runs Python modules (check + optional simulate) first, then
+        runs YAML-based atomic tests for any additional techniques
+        not covered by Python modules when --simulate is active.
+
         Args:
             target: The target to scan.
 
@@ -183,9 +197,32 @@ class ScanEngine:
             if target.os_type is None:
                 session.detect_os()
 
+            # Phase 1: Run Python modules (passive check + optional simulate)
+            python_technique_ids: set[str] = set()
             for module in modules_to_run:
                 result = self._run_module(module, session)
                 scan_result.add_module_result(result)
+                python_technique_ids.add(module.TECHNIQUE_ID)
+
+            # Phase 2: Run atomic YAML tests (simulate mode only)
+            if self.simulate:
+                atomic_techniques = self._atomic_runner.apply_filters(
+                    tactic=self.tactic_filter,
+                    technique_id=self.technique_filter,
+                )
+
+                # Run atomics for techniques NOT already covered by Python modules,
+                # OR for all techniques when a specific technique is requested
+                for technique in atomic_techniques:
+                    if (
+                        self.technique_filter
+                        or technique.technique_id not in python_technique_ids
+                    ):
+                        atomic_results = self._run_atomic_technique(
+                            technique.technique_id, session
+                        )
+                        for ar in atomic_results:
+                            scan_result.add_module_result(ar)
 
         except (ConnectionError, RuntimeError) as e:
             log.error("scan_connection_error", error=str(e))
@@ -216,6 +253,40 @@ class ScanEngine:
         )
 
         return scan_result
+
+    def _run_atomic_technique(
+        self,
+        technique_id: str,
+        session: BaseSession,
+    ) -> list[ModuleResult]:
+        """Execute all atomic tests for a technique via the runner.
+
+        Args:
+            technique_id: MITRE ATT&CK technique ID.
+            session: Connected target session.
+
+        Returns:
+            List of ModuleResults from atomic test execution.
+        """
+        log.info("atomic_technique_start", technique_id=technique_id)
+
+        results = self._atomic_runner.run_technique(
+            technique_id,
+            session,
+            check_deps=True,
+            auto_satisfy_deps=False,
+        )
+
+        for result in results:
+            self.evidence.record(
+                action="atomic_test",
+                technique_id=technique_id,
+                target=session.target.host,
+                result=result.status.value,
+                detail=f"{len(result.findings)} findings",
+            )
+
+        return results
 
     def _run_module(
         self, module: BaseModule, session: BaseSession
@@ -330,7 +401,7 @@ class ScanEngine:
 
     @property
     def discovered_modules(self) -> list[dict[str, Any]]:
-        """Return metadata about all discovered modules."""
+        """Return metadata about all discovered Python modules."""
         return [
             {
                 "technique_id": m.TECHNIQUE_ID,
@@ -340,6 +411,34 @@ class ScanEngine:
                 "requires_admin": m.REQUIRES_ADMIN,
                 "safe_mode": m.SAFE_MODE,
                 "supported_os": [os.value for os in m.SUPPORTED_OS],
+                "source": "python",
             }
             for m in self._modules
         ]
+
+    @property
+    def discovered_atomics(self) -> list[dict[str, Any]]:
+        """Return metadata about all discovered atomic YAML tests."""
+        return self._atomic_runner.discovered_techniques
+
+    @property
+    def all_discovered(self) -> list[dict[str, Any]]:
+        """Return metadata about all discovered modules + atomic tests."""
+        python_ids = {m.TECHNIQUE_ID for m in self._modules}
+        combined = list(self.discovered_modules)
+
+        for atomic in self.discovered_atomics:
+            combined.append({
+                "technique_id": atomic["technique_id"],
+                "technique_name": atomic["display_name"],
+                "tactic": atomic["tactic"],
+                "severity": "",
+                "requires_admin": atomic["elevation_required"],
+                "safe_mode": False,
+                "supported_os": ["Windows"],
+                "source": "atomic",
+                "test_count": atomic["windows_tests"],
+                "has_python_module": atomic["technique_id"] in python_ids,
+            })
+
+        return combined

@@ -1,0 +1,43 @@
+attack_technique: T1113
+display_name: "Screen Capture"
+tactic: Collection
+atomic_tests:
+  - name: "Screen Capture via PowerShell"
+    auto_generated_guid: f4f4a5b5c5d5e5f5a6b6c6d6e6f6a7b7
+    description: |
+      Captures a screenshot using .NET System.Drawing.
+    supported_platforms:
+      - windows
+    input_arguments:
+      output_path:
+        description: "Screenshot output path"
+        type: path
+        default: "%TEMP%\\atomic_screenshot.png"
+    executor:
+      name: powershell
+      command: |
+        Add-Type -AssemblyName System.Windows.Forms
+        $screen = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+        $bitmap = New-Object System.Drawing.Bitmap($screen.Width, $screen.Height)
+        $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+        $graphics.CopyFromScreen($screen.Location, [System.Drawing.Point]::Empty, $screen.Size)
+        $bitmap.Save("#{output_path}")
+        Write-Output "Screenshot saved to: #{output_path}"
+        $graphics.Dispose(); $bitmap.Dispose()
+      cleanup_command: |
+        Remove-Item "#{output_path}" -Force -ErrorAction SilentlyContinue
+      elevation_required: false
+
+  - name: "Screen Capture via nircmd (if available)"
+    auto_generated_guid: a5a5b5c5d5e5f5a6b6c6d6e6f6a7b7c7
+    description: |
+      Checks for screenshot capture tools on the system.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        # Check for common screenshot tools
+        $tools = @("snippingtool.exe","SnippingTool.exe","nircmd.exe","screenshot.exe")
+        foreach ($t in $tools) { $found = Get-Command $t -ErrorAction SilentlyContinue; if ($found) { Write-Output "Found: $($found.Source)" } }
+      elevation_required: false

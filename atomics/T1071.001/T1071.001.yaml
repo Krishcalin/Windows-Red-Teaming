@@ -1,0 +1,34 @@
+attack_technique: T1071.001
+display_name: "Application Layer Protocol: Web Protocols"
+tactic: Command and Control
+atomic_tests:
+  - name: "HTTP Outbound Connection Test"
+    auto_generated_guid: c3c3d3e3f3a4b4c4d4e4f4a5b5c5d5e5
+    description: |
+      Tests outbound HTTP/HTTPS connectivity and proxy settings.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        # Check proxy configuration
+        [System.Net.WebRequest]::GetSystemWebProxy() | Format-List
+        # Test outbound HTTP
+        try { $r = Invoke-WebRequest -Uri "https://www.microsoft.com" -UseBasicParsing -TimeoutSec 10; Write-Output "HTTPS outbound: OK (Status: $($r.StatusCode))" }
+        catch { Write-Output "HTTPS outbound: BLOCKED ($($_.Exception.Message))" }
+        # Check for proxy settings
+        Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings' | Select-Object ProxyServer,ProxyEnable,AutoConfigURL
+      elevation_required: false
+
+  - name: "Outbound Port Connectivity Check"
+    auto_generated_guid: d4d4e4f4a5b5c5d5e5f5a6b6c6d6e6f6
+    description: |
+      Tests outbound connectivity on common C2 ports.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $ports = @(@{Port=80;Name="HTTP"},@{Port=443;Name="HTTPS"},@{Port=8080;Name="HTTP-Alt"},@{Port=8443;Name="HTTPS-Alt"},@{Port=53;Name="DNS"},@{Port=4443;Name="C2-Common"})
+        foreach ($p in $ports) { $test = Test-NetConnection -ComputerName "8.8.8.8" -Port $p.Port -WarningAction SilentlyContinue -InformationLevel Quiet; Write-Output "Port $($p.Port) ($($p.Name)): $(if ($test) {'OPEN'} else {'BLOCKED'})" }
+      elevation_required: false

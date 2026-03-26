@@ -49,6 +49,10 @@ Windows-Red-Teaming/
 │   ├── command_and_control/       # TA0011
 │   ├── exfiltration/              # TA0010
 │   └── impact/                    # TA0040
+├── atomics/                       # YAML-based atomic tests (ART-style)
+│   ├── T1082/T1082.yaml          # One YAML per ATT&CK technique
+│   ├── T1087.001/T1087.001.yaml
+│   └── ... (61 techniques, 202 tests)
 ├── templates/                     # Jinja2 report templates
 │   └── report.html
 ├── reports/                       # Generated report output (gitignored)
@@ -175,24 +179,27 @@ Required class attributes: `TECHNIQUE_ID`, `TECHNIQUE_NAME`, `TACTIC`, `SEVERITY
 - [ ] T1036 Masquerading detection
 - [ ] T1070.001 Clear Windows Event Logs capability
 
-### Phase 5 — Lateral Movement, C2 & Exfiltration
-- [ ] T1021.001 RDP configuration audit
-- [ ] T1021.002 SMB/Admin Shares audit
-- [ ] T1021.006 WinRM configuration audit
-- [ ] T1550.002 Pass the Hash feasibility
-- [ ] T1071.001 Web Protocol C2 (outbound HTTP/S checks)
-- [ ] T1048 Exfiltration channel detection
-- [ ] T1041 C2 channel exfiltration check
+### Phase 5 — Atomic Test Library (COMPLETE)
+- [x] Atomic data models (`core/atomic_models.py`)
+- [x] Atomic test runner (`core/atomic_runner.py`)
+- [x] Engine integration for YAML atomic test discovery and execution
+- [x] CLI enhancements: `list-modules --source atomic`, `run-atomic`
+- [x] 61 techniques, 202 atomic tests across all 13 MITRE ATT&CK tactics
+- [x] Lateral Movement: T1021.001 RDP, T1021.002 SMB, T1021.006 WinRM, T1550.002 PtH
+- [x] Collection: T1113, T1560.001, T1074.001, T1115, T1219
+- [x] Command & Control: T1105, T1071.001, T1219
+- [x] Exfiltration: T1048.003
+- [x] Impact: T1489, T1490, T1529, T1485, T1531
 
 ### Phase 6 — Reporting & ATT&CK Integration
-- [ ] ATT&CK Navigator JSON layer export
-- [ ] HTML report with executive summary
-- [ ] JSON/CSV machine-readable output
+- [x] ATT&CK Navigator JSON layer export
+- [x] HTML report with executive summary
+- [x] JSON/CSV machine-readable output
 - [ ] Per-technique detail pages with mitigations
 - [ ] CIS Benchmark / NIST 800-53 mapping
 
 ### Phase 7 — Testing & Hardening
-- [ ] Unit tests per module
+- [x] Unit tests (122 passing)
 - [ ] Integration tests against lab VMs (Win10/11/2019/2022)
 - [ ] Safety controls validation (dry-run, rollback)
 - [ ] CI/CD pipeline (GitHub Actions)

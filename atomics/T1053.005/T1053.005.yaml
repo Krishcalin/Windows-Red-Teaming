@@ -1,0 +1,80 @@
+attack_technique: T1053.005
+display_name: "Scheduled Task/Job: Scheduled Task"
+tactic: Execution
+atomic_tests:
+  - name: "Create Scheduled Task via schtasks"
+    auto_generated_guid: d6d7d8d9e0e1f2f3a4a5b6b7c8c9d0d1
+    description: |
+      Creates a scheduled task using schtasks.exe.
+    supported_platforms:
+      - windows
+    input_arguments:
+      task_name:
+        description: "Name of the scheduled task"
+        type: string
+        default: "AtomicRedTeamTest"
+    executor:
+      name: command_prompt
+      command: |
+        schtasks /create /tn #{task_name} /tr "cmd.exe /c whoami" /sc once /st 23:59 /f
+        schtasks /query /tn #{task_name} /v /fo list
+      cleanup_command: |
+        schtasks /delete /tn #{task_name} /f >nul 2>&1
+      elevation_required: true
+
+  - name: "Create Scheduled Task via PowerShell"
+    auto_generated_guid: e7e8e9e0f1f2a3a4b5b6c7c8d9d0e1e2
+    description: |
+      Creates a scheduled task using PowerShell cmdlets.
+    supported_platforms:
+      - windows
+    input_arguments:
+      task_name:
+        description: "Name of the scheduled task"
+        type: string
+        default: "AtomicPSTest"
+    executor:
+      name: powershell
+      command: |
+        $action = New-ScheduledTaskAction -Execute "cmd.exe" -Argument "/c whoami"
+        $trigger = New-ScheduledTaskTrigger -Once -At (Get-Date).AddHours(24)
+        Register-ScheduledTask -TaskName "#{task_name}" -Action $action -Trigger $trigger -Force
+        Get-ScheduledTask -TaskName "#{task_name}" | Select-Object TaskName,State,TaskPath
+      cleanup_command: |
+        Unregister-ScheduledTask -TaskName "#{task_name}" -Confirm:$false -ErrorAction SilentlyContinue
+      elevation_required: true
+
+  - name: "Enumerate Existing Scheduled Tasks"
+    auto_generated_guid: f8f9f0f1a2a3b4b5c6c7d8d9e0e1f2f3
+    description: |
+      Enumerates all scheduled tasks and their configurations.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-ScheduledTask | Where-Object { $_.State -ne 'Disabled' } | Select-Object TaskName,TaskPath,State,@{Name='Actions';Expression={$_.Actions.Execute}} | Sort-Object TaskPath
+      elevation_required: false
+
+  - name: "Scheduled Task with SYSTEM Privileges"
+    auto_generated_guid: a9a0a1a2b3b4c5c6d7d8e9e0f1f2a3a4
+    description: |
+      Creates a scheduled task that runs as SYSTEM.
+    supported_platforms:
+      - windows
+    input_arguments:
+      task_name:
+        description: "Name of the scheduled task"
+        type: string
+        default: "AtomicSystemTask"
+    executor:
+      name: command_prompt
+      command: |
+        schtasks /create /tn #{task_name} /tr "cmd.exe /c whoami > %TEMP%\schtask_system.txt" /sc once /st 23:59 /ru SYSTEM /f
+        schtasks /run /tn #{task_name}
+        timeout /t 3 >nul
+        type %TEMP%\schtask_system.txt
+      cleanup_command: |
+        schtasks /delete /tn #{task_name} /f >nul 2>&1
+        del /f %TEMP%\schtask_system.txt >nul 2>&1
+      elevation_required: true

