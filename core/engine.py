@@ -412,6 +412,7 @@ class ScanEngine:
                 "safe_mode": m.SAFE_MODE,
                 "supported_os": [os.value for os in m.SUPPORTED_OS],
                 "source": "python",
+                "mitigations": m.get_mitigations(),
             }
             for m in self._modules
         ]

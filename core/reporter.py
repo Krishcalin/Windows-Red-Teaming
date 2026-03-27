@@ -15,6 +15,7 @@ from typing import Any
 import structlog
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from core.compliance_mapper import ComplianceMapper
 from core.models import ScanResult, Severity
 
 log = structlog.get_logger(component="reporter")
@@ -66,6 +67,24 @@ class Reporter:
 
         output_path = self.output_dir / output_file
 
+        # Collect mitigations from modules via engine discovery
+        mitigations = self._collect_mitigations(scan_result)
+
+        # Build compliance data
+        compliance_mapper = ComplianceMapper()
+        compliance = {
+            "cis": {},
+            "nist": {},
+        }
+        for mr in scan_result.module_results:
+            tid = mr.technique_id
+            cis = compliance_mapper.get_cis_controls(tid)
+            nist = compliance_mapper.get_nist_controls(tid)
+            if cis:
+                compliance["cis"][tid] = cis
+            if nist:
+                compliance["nist"][tid] = nist
+
         template = self._jinja_env.get_template("report.html")
         html = template.render(
             scan=scan_result.to_dict(),
@@ -74,6 +93,8 @@ class Reporter:
                 "%Y-%m-%d %H:%M:%S UTC"
             ),
             severity_order=["CRITICAL", "HIGH", "MEDIUM", "LOW", "INFO"],
+            mitigations=mitigations,
+            compliance=compliance,
         )
 
         output_path.write_text(html, encoding="utf-8")
@@ -135,6 +156,36 @@ class Reporter:
         output_path.write_text(buffer.getvalue(), encoding="utf-8")
         log.info("csv_report_saved", path=str(output_path))
         return output_path
+
+    def generate_compliance(
+        self,
+        scan_result: ScanResult,
+        output_file: str | None = None,
+    ) -> Path:
+        """Generate a JSON compliance report with CIS/NIST mappings."""
+        mapper = ComplianceMapper()
+        return mapper.generate_compliance_report(
+            scan_result,
+            str(self.output_dir / output_file) if output_file else None,
+        )
+
+    @staticmethod
+    def _collect_mitigations(scan_result: ScanResult) -> dict[str, list[str]]:
+        """Collect mitigations for each technique from discovered modules."""
+        from core.engine import ScanEngine
+
+        mitigations: dict[str, list[str]] = {}
+        try:
+            engine = ScanEngine()
+            for mod_info in engine.discovered_modules:
+                tid = mod_info["technique_id"]
+                mits = mod_info.get("mitigations", [])
+                if mits:
+                    mitigations[tid] = mits
+        except Exception:
+            # Fallback: no mitigations if engine can't load
+            pass
+        return mitigations
 
     def print_summary(self, scan_result: ScanResult) -> str:
         """Generate a text summary for terminal output.

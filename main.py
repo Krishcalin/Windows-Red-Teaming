@@ -70,7 +70,7 @@ def cli() -> None:
 @click.option(
     "--format", "-f", "output_format",
     multiple=True,
-    type=click.Choice(["html", "json", "csv"], case_sensitive=False),
+    type=click.Choice(["html", "json", "csv", "compliance"], case_sensitive=False),
     help="Report format(s). Can be specified multiple times.",
 )
 @click.option(
@@ -173,6 +173,12 @@ def scan(
                         f"{output}.csv" if output else None,
                     )
                     console.print(f"  CSV report:  [green]{path}[/green]")
+                case "compliance":
+                    path = reporter.generate_compliance(
+                        scan_result,
+                        f"{output}_compliance.json" if output else None,
+                    )
+                    console.print(f"  Compliance:  [green]{path}[/green]")
 
         # Generate ATT&CK Navigator layer
         if config.attack_layer:
@@ -412,7 +418,7 @@ def run_atomic(
 @click.option(
     "--format", "-f", "output_format",
     default="html",
-    type=click.Choice(["html", "json", "csv", "attack-layer"], case_sensitive=False),
+    type=click.Choice(["html", "json", "csv", "attack-layer", "compliance"], case_sensitive=False),
     help="Output format.",
 )
 @click.option(
@@ -491,6 +497,11 @@ def report(input_file: str, output_format: str, output: str | None) -> None:
             mapper = MitreMapper()
             path = mapper.generate_layer(scan_result, output)
             console.print(f"ATT&CK layer: [green]{path}[/green]")
+        case "compliance":
+            from core.compliance_mapper import ComplianceMapper
+            cm = ComplianceMapper()
+            path = cm.generate_compliance_report(scan_result, output)
+            console.print(f"Compliance:   [green]{path}[/green]")
 
 
 if __name__ == "__main__":

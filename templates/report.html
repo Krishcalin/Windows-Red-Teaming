@@ -17,6 +17,7 @@
             --low: #00bfff;
             --info: #8b949e;
             --clean: #3fb950;
+            --sidebar-width: 240px;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,10 +26,61 @@
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
-            padding: 2rem;
         }
 
-        .container { max-width: 1200px; margin: 0 auto; }
+        /* ── Sidebar Navigation ── */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 1.25rem 0;
+            z-index: 100;
+        }
+        .sidebar-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--muted);
+            padding: 0 1rem;
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        .sidebar a {
+            display: block;
+            padding: 0.35rem 1rem;
+            color: var(--text);
+            text-decoration: none;
+            font-size: 0.85rem;
+            border-left: 3px solid transparent;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .sidebar a:hover,
+        .sidebar a.active {
+            background: rgba(255,255,255,0.05);
+            border-left-color: var(--low);
+        }
+        .sidebar a.section-link {
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+        .sidebar a.tactic-link {
+            padding-left: 1.75rem;
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+        .sidebar a.tactic-link:hover { color: var(--text); }
+
+        /* ── Main Content ── */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 2rem 2.5rem;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
 
         h1 {
             font-size: 1.75rem;
@@ -37,14 +89,20 @@
         }
         h2 {
             font-size: 1.25rem;
-            margin: 1.5rem 0 0.75rem;
+            margin: 2rem 0 0.75rem;
             padding-bottom: 0.5rem;
             border-bottom: 1px solid var(--border);
         }
+        h3 {
+            font-size: 1.05rem;
+            margin: 1.25rem 0 0.5rem;
+            color: var(--text);
+        }
 
+        /* ── Executive Summary Cards ── */
         .meta {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1rem;
             margin: 1.5rem 0;
         }
@@ -57,6 +115,57 @@
         .meta-card .label { color: var(--muted); font-size: 0.8rem; text-transform: uppercase; }
         .meta-card .value { font-size: 1.5rem; font-weight: 600; margin-top: 0.25rem; }
 
+        /* ── Risk Score Gauge ── */
+        .risk-gauge {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .risk-score-circle {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            flex-shrink: 0;
+        }
+        .risk-score-circle svg { transform: rotate(-90deg); }
+        .risk-score-circle .score-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.75rem;
+            font-weight: 700;
+        }
+        .risk-details { flex: 1; }
+        .risk-details .risk-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .risk-details .risk-explanation {
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .risk-bar-track {
+            width: 100%;
+            height: 8px;
+            background: var(--border);
+            border-radius: 4px;
+            margin-top: 0.75rem;
+            overflow: hidden;
+        }
+        .risk-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* ── Severity Badges ── */
         .severity-bar {
             display: flex;
             gap: 0.5rem;
@@ -75,6 +184,7 @@
         .sev-LOW      { background: var(--low); color: #000; }
         .sev-INFO     { background: var(--info); color: #fff; }
 
+        /* ── Tables ── */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -99,6 +209,7 @@
         .status-failure, .status-error { color: var(--critical); }
         .status-skipped { color: var(--muted); }
 
+        /* ── Finding Cards ── */
         .finding-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -118,7 +229,30 @@
             font-size: 0.85rem;
         }
         .finding-card .description { margin: 0.5rem 0; }
-        .finding-card .evidence {
+
+        /* ── Collapsible Evidence Blocks ── */
+        .evidence-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--muted);
+            font-size: 0.8rem;
+            font-family: inherit;
+            padding: 0.3rem 0.6rem;
+            cursor: pointer;
+            margin: 0.5rem 0 0.25rem;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .evidence-toggle:hover {
+            color: var(--text);
+            border-color: var(--text);
+        }
+        .evidence-toggle .arrow { transition: transform 0.2s; }
+        .evidence-toggle.open .arrow { transform: rotate(90deg); }
+        .evidence-block {
             background: var(--bg);
             border: 1px solid var(--border);
             border-radius: 4px;
@@ -127,16 +261,129 @@
             font-size: 0.8rem;
             white-space: pre-wrap;
             word-break: break-all;
-            margin: 0.5rem 0;
-            max-height: 200px;
+            max-height: 300px;
             overflow-y: auto;
+            display: none;
         }
+        .evidence-block.visible { display: block; }
+
         .finding-card .recommendation {
             color: var(--clean);
             font-size: 0.9rem;
             margin-top: 0.5rem;
         }
 
+        /* ── Tactic Section ── */
+        .tactic-section {
+            margin: 1.5rem 0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .tactic-header {
+            background: var(--surface);
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+        }
+        .tactic-header h3 { margin: 0; }
+        .tactic-badge {
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.75rem;
+            color: var(--muted);
+            background: var(--bg);
+            padding: 0.2rem 0.5rem;
+            border-radius: 3px;
+        }
+        .tactic-body { padding: 0.5rem 1.25rem 1rem; }
+
+        /* ── Technique Detail Card ── */
+        .technique-detail {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin: 0.75rem 0;
+            overflow: hidden;
+        }
+        .technique-detail-header {
+            padding: 0.75rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+        }
+        .technique-detail-header:hover { background: rgba(255,255,255,0.02); }
+        .technique-detail-body { padding: 0.75rem 1rem; }
+        .mitigation-list {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0;
+        }
+        .mitigation-list li {
+            padding: 0.35rem 0 0.35rem 1.25rem;
+            position: relative;
+            font-size: 0.9rem;
+            color: var(--text);
+        }
+        .mitigation-list li::before {
+            content: "\25B8";
+            position: absolute;
+            left: 0;
+            color: var(--clean);
+        }
+
+        /* ── Compliance Section ── */
+        .compliance-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .compliance-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1rem 1.25rem;
+        }
+        .compliance-card h3 {
+            margin: 0 0 0.75rem;
+            font-size: 1rem;
+        }
+        .compliance-technique {
+            margin: 0.5rem 0;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .compliance-technique:last-child { border-bottom: none; }
+        .compliance-technique code {
+            font-size: 0.8rem;
+            color: var(--low);
+        }
+        .compliance-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.3rem;
+        }
+        .control-tag {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 0.15rem 0.5rem;
+            font-size: 0.75rem;
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            color: var(--muted);
+        }
+        .compliance-empty {
+            color: var(--muted);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        /* ── Footer ── */
         .footer {
             margin-top: 3rem;
             padding-top: 1rem;
@@ -145,14 +392,108 @@
             font-size: 0.8rem;
             text-align: center;
         }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; padding: 1.5rem; }
+            .compliance-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
+
+{#- ── Compute risk score and group data ── #}
+{% set ns = namespace(
+    risk_score=0,
+    total_weight=0,
+    crit_count=0,
+    high_count=0,
+    med_count=0,
+    low_count=0,
+    info_count=0,
+    tactics={}
+) %}
+{% for mr in scan.module_results %}
+    {% for f in mr.findings %}
+        {% if f.severity == 'CRITICAL' %}
+            {% set ns.crit_count = ns.crit_count + 1 %}
+            {% set ns.total_weight = ns.total_weight + 10 %}
+        {% elif f.severity == 'HIGH' %}
+            {% set ns.high_count = ns.high_count + 1 %}
+            {% set ns.total_weight = ns.total_weight + 7 %}
+        {% elif f.severity == 'MEDIUM' %}
+            {% set ns.med_count = ns.med_count + 1 %}
+            {% set ns.total_weight = ns.total_weight + 4 %}
+        {% elif f.severity == 'LOW' %}
+            {% set ns.low_count = ns.low_count + 1 %}
+            {% set ns.total_weight = ns.total_weight + 2 %}
+        {% else %}
+            {% set ns.info_count = ns.info_count + 1 %}
+            {% set ns.total_weight = ns.total_weight + 0.5 %}
+        {% endif %}
+    {% endfor %}
+{% endfor %}
+{#- Normalise to 0-100 scale: max possible weight scales by techniques tested #}
+{% set max_weight = (scan.techniques_tested | default(1)) * 10 %}
+{% if max_weight > 0 %}
+    {% set ns.risk_score = ((ns.total_weight / max_weight) * 100) | round | int %}
+{% endif %}
+{% if ns.risk_score > 100 %}{% set ns.risk_score = 100 %}{% endif %}
+
+{#- Determine risk level and colour #}
+{% if ns.risk_score >= 80 %}
+    {% set risk_level = "Critical" %}
+    {% set risk_color = "var(--critical)" %}
+{% elif ns.risk_score >= 60 %}
+    {% set risk_level = "High" %}
+    {% set risk_color = "var(--high)" %}
+{% elif ns.risk_score >= 40 %}
+    {% set risk_level = "Medium" %}
+    {% set risk_color = "var(--medium)" %}
+{% elif ns.risk_score >= 20 %}
+    {% set risk_level = "Low" %}
+    {% set risk_color = "var(--low)" %}
+{% else %}
+    {% set risk_level = "Minimal" %}
+    {% set risk_color = "var(--clean)" %}
+{% endif %}
+
+{#- Build tactic grouping: dict of tactic_name -> list of module_results #}
+{% set tactic_order = [] %}
+{% set tactic_results = {} %}
+{% for mr in scan.module_results %}
+    {% set tactic = mr.tactic | default("Unknown") %}
+    {% if tactic not in tactic_results %}
+        {% if tactic_order.append(tactic) %}{% endif %}
+        {% if tactic_results.update({tactic: []}) %}{% endif %}
+    {% endif %}
+    {% if tactic_results[tactic].append(mr) %}{% endif %}
+{% endfor %}
+
+<!-- ── Sidebar Navigation ── -->
+<nav class="sidebar">
+    <div class="sidebar-title">Report Navigation</div>
+    <a href="#executive-summary" class="section-link">Executive Summary</a>
+    <a href="#risk-score" class="section-link">Risk Score</a>
+    <a href="#severity-breakdown" class="section-link">Severity Breakdown</a>
+    <a href="#technique-results" class="section-link">Technique Results</a>
+    <a href="#tactic-view" class="section-link">Tactic-Grouped View</a>
+    {% for tactic in tactic_order %}
+    <a href="#tactic-{{ tactic | lower | replace(' ', '-') | replace('/', '-') | replace('&', 'and') }}" class="tactic-link">{{ tactic }}</a>
+    {% endfor %}
+    <a href="#technique-details" class="section-link">Technique Details</a>
+    <a href="#compliance" class="section-link">Compliance Mapping</a>
+</nav>
+
+<!-- ── Main Content ── -->
+<div class="main-content">
 <div class="container">
     <h1>Windows Red Team Scan Report</h1>
     <p style="color: var(--muted);">Generated: {{ generated_at }}</p>
 
-    <!-- Executive Summary -->
+    <!-- ── Executive Summary ── -->
+    <h2 id="executive-summary">Executive Summary</h2>
     <div class="meta">
         <div class="meta-card">
             <div class="label">Target</div>
@@ -172,10 +513,38 @@
                 {{ scan.total_findings }}
             </div>
         </div>
+        <div class="meta-card">
+            <div class="label">Risk Score</div>
+            <div class="value" style="color: {{ risk_color }}">{{ ns.risk_score }} / 100</div>
+        </div>
     </div>
 
-    <!-- Severity Breakdown -->
-    <h2>Findings by Severity</h2>
+    <!-- ── Risk Score Gauge ── -->
+    <h2 id="risk-score">Overall Risk Score</h2>
+    <div class="risk-gauge">
+        <div class="risk-score-circle">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="var(--border)" stroke-width="8"/>
+                <circle cx="50" cy="50" r="42" fill="none" stroke="{{ risk_color }}" stroke-width="8"
+                        stroke-dasharray="{{ (ns.risk_score / 100 * 263.9) | round(1) }} 263.9"
+                        stroke-linecap="round"/>
+            </svg>
+            <span class="score-text" style="color: {{ risk_color }}">{{ ns.risk_score }}</span>
+        </div>
+        <div class="risk-details">
+            <div class="risk-label" style="color: {{ risk_color }}">{{ risk_level }} Risk</div>
+            <div class="risk-explanation">
+                Calculated from {{ scan.total_findings }} finding(s) across {{ scan.techniques_tested }} techniques.
+                Severity weights: CRITICAL=10, HIGH=7, MEDIUM=4, LOW=2, INFO=0.5.
+            </div>
+            <div class="risk-bar-track">
+                <div class="risk-bar-fill" style="width: {{ ns.risk_score }}%; background: {{ risk_color }};"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Severity Breakdown ── -->
+    <h2 id="severity-breakdown">Findings by Severity</h2>
     <div class="severity-bar">
         {% for sev in severity_order %}
         <span class="severity-badge sev-{{ sev }}">
@@ -184,8 +553,8 @@
         {% endfor %}
     </div>
 
-    <!-- Module Results Table -->
-    <h2>Technique Results</h2>
+    <!-- ── Module Results Table ── -->
+    <h2 id="technique-results">Technique Results</h2>
     <table>
         <thead>
             <tr>
@@ -200,7 +569,7 @@
         <tbody>
             {% for mr in scan.module_results %}
             <tr>
-                <td><code>{{ mr.technique_id }}</code></td>
+                <td><a href="#technique-{{ mr.technique_id }}" style="color: var(--low); text-decoration: none;"><code>{{ mr.technique_id }}</code></a></td>
                 <td>{{ mr.technique_name }}</td>
                 <td>{{ mr.tactic }}</td>
                 <td class="status-{{ mr.status }}">{{ mr.status | upper }}</td>
@@ -211,24 +580,116 @@
         </tbody>
     </table>
 
-    <!-- Detailed Findings -->
-    <h2>Detailed Findings</h2>
-    {% for mr in scan.module_results %}
-        {% for finding in mr.findings %}
-        <div class="finding-card">
-            <div class="finding-header">
-                <span class="severity-badge sev-{{ finding.severity }}">{{ finding.severity }}</span>
-                <span class="technique-id">{{ finding.technique_id }} — {{ finding.technique_name }}</span>
+    <!-- ── Tactic-Grouped View ── -->
+    <h2 id="tactic-view">Findings by ATT&CK Tactic</h2>
+
+    {% for tactic in tactic_order %}
+    {% set tactic_mrs = tactic_results[tactic] %}
+    {% set tactic_finding_count = namespace(val=0) %}
+    {% for mr in tactic_mrs %}{% set tactic_finding_count.val = tactic_finding_count.val + (mr.findings | length) %}{% endfor %}
+
+    <div class="tactic-section" id="tactic-{{ tactic | lower | replace(' ', '-') | replace('/', '-') | replace('&', 'and') }}">
+        <div class="tactic-header">
+            <h3>{{ tactic }}</h3>
+            <div>
+                <span class="tactic-badge">{{ tactic_mrs | length }} technique(s)</span>
+                <span class="tactic-badge" {% if tactic_finding_count.val > 0 %}style="color: var(--high)"{% endif %}>{{ tactic_finding_count.val }} finding(s)</span>
             </div>
-            <div class="description">{{ finding.description }}</div>
-            {% if finding.evidence %}
-            <div class="evidence">{{ finding.evidence }}</div>
+        </div>
+        <div class="tactic-body">
+            {% for mr in tactic_mrs %}
+            <div style="margin: 0.5rem 0;">
+                <strong><a href="#technique-{{ mr.technique_id }}" style="color: var(--low); text-decoration: none;">{{ mr.technique_id }}</a></strong> &mdash; {{ mr.technique_name }}
+                <span class="status-{{ mr.status }}" style="margin-left: 0.5rem; font-size: 0.85rem;">{{ mr.status | upper }}</span>
+                {% if mr.findings | length > 0 %}
+                <span style="color: var(--high); font-size: 0.85rem; margin-left: 0.5rem;">{{ mr.findings | length }} finding(s)</span>
+                {% endif %}
+            </div>
+            {% for finding in mr.findings %}
+            <div class="finding-card" style="margin-left: 1rem;">
+                <div class="finding-header">
+                    <span class="severity-badge sev-{{ finding.severity }}">{{ finding.severity }}</span>
+                    <span class="technique-id">{{ finding.technique_id }}</span>
+                </div>
+                <div class="description">{{ finding.description }}</div>
+                {% if finding.evidence %}
+                <button class="evidence-toggle" onclick="toggleEvidence(this)">
+                    <span class="arrow">&#9654;</span> Show evidence
+                </button>
+                <div class="evidence-block">{{ finding.evidence }}</div>
+                {% endif %}
+                {% if finding.recommendation %}
+                <div class="recommendation">&#9654; {{ finding.recommendation }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if tactic_order | length == 0 %}
+    <div class="finding-card" style="border-color: var(--clean);">
+        <div class="description" style="color: var(--clean); text-align: center;">
+            No module results to group by tactic.
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Per-Technique Detail Sections with Mitigations ── -->
+    <h2 id="technique-details">Technique Details &amp; Mitigations</h2>
+
+    {% for mr in scan.module_results %}
+    <div class="technique-detail" id="technique-{{ mr.technique_id }}">
+        <div class="technique-detail-header" onclick="toggleSection(this)">
+            <div>
+                <code style="color: var(--low);">{{ mr.technique_id }}</code>
+                <strong style="margin-left: 0.5rem;">{{ mr.technique_name }}</strong>
+                <span style="color: var(--muted); margin-left: 0.5rem; font-size: 0.85rem;">({{ mr.tactic }})</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span class="status-{{ mr.status }}" style="font-size: 0.85rem;">{{ mr.status | upper }}</span>
+                {% if mr.findings | length > 0 %}
+                <span style="color: var(--high); font-size: 0.85rem;">{{ mr.findings | length }} finding(s)</span>
+                {% endif %}
+                <span class="arrow" style="color: var(--muted); transition: transform 0.2s;">&#9654;</span>
+            </div>
+        </div>
+        <div class="technique-detail-body" style="display: none;">
+            {% if mr.findings | length > 0 %}
+            <h4 style="font-size: 0.85rem; color: var(--muted); text-transform: uppercase; margin-bottom: 0.5rem;">Findings</h4>
+            {% for finding in mr.findings %}
+            <div class="finding-card">
+                <div class="finding-header">
+                    <span class="severity-badge sev-{{ finding.severity }}">{{ finding.severity }}</span>
+                </div>
+                <div class="description">{{ finding.description }}</div>
+                {% if finding.evidence %}
+                <button class="evidence-toggle" onclick="toggleEvidence(this)">
+                    <span class="arrow">&#9654;</span> Show evidence
+                </button>
+                <div class="evidence-block">{{ finding.evidence }}</div>
+                {% endif %}
+                {% if finding.recommendation %}
+                <div class="recommendation">&#9654; {{ finding.recommendation }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <p style="color: var(--clean); font-size: 0.9rem;">No findings &mdash; control appears effective.</p>
             {% endif %}
-            {% if finding.recommendation %}
-            <div class="recommendation">&#9654; {{ finding.recommendation }}</div>
+
+            {#- Mitigations for this technique #}
+            {% if mitigations is defined and mitigations and mr.technique_id in mitigations and mitigations[mr.technique_id] | length > 0 %}
+            <h4 style="font-size: 0.85rem; color: var(--muted); text-transform: uppercase; margin-top: 1rem; margin-bottom: 0.5rem;">Recommended Mitigations</h4>
+            <ul class="mitigation-list">
+                {% for m in mitigations[mr.technique_id] %}
+                <li>{{ m }}</li>
+                {% endfor %}
+            </ul>
             {% endif %}
         </div>
-        {% endfor %}
+    </div>
     {% endfor %}
 
     {% if scan.total_findings == 0 %}
@@ -239,10 +700,123 @@
     </div>
     {% endif %}
 
+    <!-- ── Compliance Mapping ── -->
+    <h2 id="compliance">Compliance Mapping</h2>
+
+    {% if compliance is defined and compliance %}
+    <div class="compliance-grid">
+        <!-- CIS Benchmarks -->
+        <div class="compliance-card">
+            <h3>CIS Benchmarks</h3>
+            {% if compliance.cis is defined and compliance.cis %}
+                {% for technique_id, controls in compliance.cis.items() %}
+                <div class="compliance-technique">
+                    <code>{{ technique_id }}</code>
+                    {% for mr in scan.module_results if mr.technique_id == technique_id %}
+                     &mdash; {{ mr.technique_name }}
+                    {% endfor %}
+                    <div class="compliance-controls">
+                        {% for ctrl in controls %}
+                        <span class="control-tag">{{ ctrl }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="compliance-empty">No CIS benchmark mappings available.</p>
+            {% endif %}
+        </div>
+
+        <!-- NIST 800-53 -->
+        <div class="compliance-card">
+            <h3>NIST 800-53</h3>
+            {% if compliance.nist is defined and compliance.nist %}
+                {% for technique_id, controls in compliance.nist.items() %}
+                <div class="compliance-technique">
+                    <code>{{ technique_id }}</code>
+                    {% for mr in scan.module_results if mr.technique_id == technique_id %}
+                     &mdash; {{ mr.technique_name }}
+                    {% endfor %}
+                    <div class="compliance-controls">
+                        {% for ctrl in controls %}
+                        <span class="control-tag">{{ ctrl }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="compliance-empty">No NIST 800-53 mappings available.</p>
+            {% endif %}
+        </div>
+    </div>
+    {% else %}
+    <div class="finding-card">
+        <div class="description" style="color: var(--muted); text-align: center;">
+            Compliance mapping data not available. Pass <code>compliance</code> context with <code>cis</code> and <code>nist</code> keys to populate this section.
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- ── Footer ── -->
     <div class="footer">
         Windows Red Teaming Tool v1.0.0 &mdash; MITRE ATT&CK Framework<br>
         Scan ID: {{ scan.scan_id }}
     </div>
 </div>
+</div>
+
+<script>
+    /* Toggle evidence blocks */
+    function toggleEvidence(btn) {
+        var block = btn.nextElementSibling;
+        var isVisible = block.classList.contains('visible');
+        block.classList.toggle('visible');
+        btn.classList.toggle('open');
+        btn.querySelector('.arrow').innerHTML = isVisible ? '&#9654;' : '&#9660;';
+        var label = btn.childNodes[btn.childNodes.length - 1];
+        label.textContent = isVisible ? ' Show evidence' : ' Hide evidence';
+    }
+
+    /* Toggle technique detail sections */
+    function toggleSection(header) {
+        var body = header.nextElementSibling;
+        var arrow = header.querySelector('.arrow');
+        if (body.style.display === 'none') {
+            body.style.display = 'block';
+            arrow.innerHTML = '&#9660;';
+        } else {
+            body.style.display = 'none';
+            arrow.innerHTML = '&#9654;';
+        }
+    }
+
+    /* Sidebar active link tracking */
+    (function() {
+        var links = document.querySelectorAll('.sidebar a');
+        var sections = [];
+        links.forEach(function(link) {
+            var href = link.getAttribute('href');
+            if (href && href.startsWith('#')) {
+                var el = document.getElementById(href.substring(1));
+                if (el) sections.push({ link: link, el: el });
+            }
+        });
+
+        function updateActive() {
+            var scrollPos = document.querySelector('.main-content').scrollTop || window.scrollY;
+            var current = null;
+            sections.forEach(function(s) {
+                if (s.el.offsetTop <= scrollPos + 120) {
+                    current = s.link;
+                }
+            });
+            links.forEach(function(l) { l.classList.remove('active'); });
+            if (current) current.classList.add('active');
+        }
+
+        window.addEventListener('scroll', updateActive);
+        updateActive();
+    })();
+</script>
 </body>
 </html>
