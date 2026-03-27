@@ -399,7 +399,67 @@
             .main-content { margin-left: 0; padding: 1.5rem; }
             .compliance-grid { grid-template-columns: 1fr; }
         }
+        /* ── Dashboard Charts ── */
+        .dashboard {
+            margin: 2rem 0;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin: 1rem 0;
+        }
+        .chart-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+        }
+        .chart-card h3 {
+            margin: 0 0 0.75rem;
+            font-size: 0.95rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.03em;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-height: 280px;
+        }
+        .chart-card-wide {
+            grid-column: 1 / -1;
+        }
+        .stat-row {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .stat-item {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem 0.5rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+        .stat-item .stat-num {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .stat-item .stat-label {
+            font-size: 0.75rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-top: 0.15rem;
+        }
+        @media (max-width: 900px) {
+            .chart-grid { grid-template-columns: 1fr; }
+            .chart-card-wide { grid-column: auto; }
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
@@ -459,6 +519,16 @@
     {% set risk_color = "var(--clean)" %}
 {% endif %}
 
+{#- Count module statuses #}
+{% set status_ns = namespace(success=0, skipped=0, error=0, failure=0) %}
+{% for mr in scan.module_results %}
+    {% if mr.status == 'success' %}{% set status_ns.success = status_ns.success + 1 %}
+    {% elif mr.status == 'skipped' %}{% set status_ns.skipped = status_ns.skipped + 1 %}
+    {% elif mr.status == 'error' %}{% set status_ns.error = status_ns.error + 1 %}
+    {% elif mr.status == 'failure' %}{% set status_ns.failure = status_ns.failure + 1 %}
+    {% endif %}
+{% endfor %}
+
 {#- Build tactic grouping: dict of tactic_name -> list of module_results #}
 {% set tactic_order = [] %}
 {% set tactic_results = {} %}
@@ -475,6 +545,7 @@
 <nav class="sidebar">
     <div class="sidebar-title">Report Navigation</div>
     <a href="#executive-summary" class="section-link">Executive Summary</a>
+    <a href="#dashboard" class="section-link">Dashboard</a>
     <a href="#risk-score" class="section-link">Risk Score</a>
     <a href="#severity-breakdown" class="section-link">Severity Breakdown</a>
     <a href="#technique-results" class="section-link">Technique Results</a>
@@ -516,6 +587,69 @@
         <div class="meta-card">
             <div class="label">Risk Score</div>
             <div class="value" style="color: {{ risk_color }}">{{ ns.risk_score }} / 100</div>
+        </div>
+    </div>
+
+    <!-- ── Interactive Dashboard ── -->
+    <h2 id="dashboard">Interactive Dashboard</h2>
+    <div class="dashboard">
+        <!-- Quick Stats -->
+        <div class="stat-row">
+            <div class="stat-item">
+                <div class="stat-num" style="color: var(--critical)">{{ ns.crit_count }}</div>
+                <div class="stat-label">Critical</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" style="color: var(--high)">{{ ns.high_count }}</div>
+                <div class="stat-label">High</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" style="color: var(--medium)">{{ ns.med_count }}</div>
+                <div class="stat-label">Medium</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" style="color: var(--low)">{{ ns.low_count }}</div>
+                <div class="stat-label">Low</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-num" style="color: var(--info)">{{ ns.info_count }}</div>
+                <div class="stat-label">Info</div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="chart-grid">
+            <!-- Severity Donut -->
+            <div class="chart-card">
+                <h3>Findings by Severity</h3>
+                <div class="chart-container">
+                    <canvas id="severityDonut"></canvas>
+                </div>
+            </div>
+
+            <!-- Module Status Pie -->
+            <div class="chart-card">
+                <h3>Module Execution Status</h3>
+                <div class="chart-container">
+                    <canvas id="statusPie"></canvas>
+                </div>
+            </div>
+
+            <!-- Tactic Bar Chart -->
+            <div class="chart-card chart-card-wide">
+                <h3>Findings by ATT&CK Tactic</h3>
+                <div class="chart-container">
+                    <canvas id="tacticBar"></canvas>
+                </div>
+            </div>
+
+            <!-- Technique Heatmap (horizontal bar sorted by finding count) -->
+            <div class="chart-card chart-card-wide">
+                <h3>Top Techniques by Finding Count</h3>
+                <div class="chart-container" style="max-height: 350px;">
+                    <canvas id="techniqueHeatmap"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -789,6 +923,218 @@
             arrow.innerHTML = '&#9654;';
         }
     }
+
+    /* ── Chart.js Dashboard Charts ── */
+    (function() {
+        var chartColors = {
+            critical: '#ff4444',
+            high: '#ff8c00',
+            medium: '#ffd700',
+            low: '#00bfff',
+            info: '#8b949e',
+            clean: '#3fb950',
+            skipped: '#555d6e',
+            error: '#ff4444',
+            failure: '#ff6666',
+            surface: '#161b22',
+            border: '#30363d',
+            text: '#e6edf3',
+            muted: '#8b949e',
+        };
+
+        var chartDefaults = {
+            color: chartColors.text,
+            borderColor: chartColors.border,
+            font: { family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" }
+        };
+
+        Chart.defaults.color = chartDefaults.color;
+        Chart.defaults.borderColor = chartDefaults.border;
+
+        /* Severity Donut */
+        var sevData = [{{ ns.crit_count }}, {{ ns.high_count }}, {{ ns.med_count }}, {{ ns.low_count }}, {{ ns.info_count }}];
+        var sevTotal = sevData.reduce(function(a,b){return a+b;}, 0);
+
+        if (document.getElementById('severityDonut')) {
+            new Chart(document.getElementById('severityDonut'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low', 'Info'],
+                    datasets: [{
+                        data: sevData,
+                        backgroundColor: [chartColors.critical, chartColors.high, chartColors.medium, chartColors.low, chartColors.info],
+                        borderColor: chartColors.surface,
+                        borderWidth: 3,
+                        hoverBorderColor: chartColors.text,
+                        hoverBorderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { padding: 16, usePointStyle: true, pointStyle: 'circle', font: { size: 12 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    var pct = sevTotal > 0 ? ((ctx.raw / sevTotal) * 100).toFixed(1) : 0;
+                                    return ctx.label + ': ' + ctx.raw + ' (' + pct + '%)';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        /* Module Status Pie */
+        if (document.getElementById('statusPie')) {
+            new Chart(document.getElementById('statusPie'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Success', 'Skipped', 'Error', 'Failure'],
+                    datasets: [{
+                        data: [{{ status_ns.success }}, {{ status_ns.skipped }}, {{ status_ns.error }}, {{ status_ns.failure }}],
+                        backgroundColor: [chartColors.clean, chartColors.skipped, chartColors.error, chartColors.failure],
+                        borderColor: chartColors.surface,
+                        borderWidth: 3,
+                        hoverBorderColor: chartColors.text,
+                        hoverBorderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: { padding: 16, usePointStyle: true, pointStyle: 'circle', font: { size: 12 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        /* Tactic Bar Chart */
+        var tacticLabels = [{% for tactic in tactic_order %}'{{ tactic }}'{% if not loop.last %}, {% endif %}{% endfor %}];
+        var tacticFindings = [{% for tactic in tactic_order %}{% set tc_count = namespace(v=0) %}{% for mr in tactic_results[tactic] %}{% set tc_count.v = tc_count.v + (mr.findings | length) %}{% endfor %}{{ tc_count.v }}{% if not loop.last %}, {% endif %}{% endfor %}];
+        var tacticTechniques = [{% for tactic in tactic_order %}{{ tactic_results[tactic] | length }}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+        /* Color bars by max severity in each tactic */
+        var tacticBarColors = [{% for tactic in tactic_order %}{% set max_sev = namespace(v='INFO') %}{% for mr in tactic_results[tactic] %}{% for f in mr.findings %}{% if f.severity == 'CRITICAL' %}{% set max_sev.v = 'CRITICAL' %}{% elif f.severity == 'HIGH' and max_sev.v != 'CRITICAL' %}{% set max_sev.v = 'HIGH' %}{% elif f.severity == 'MEDIUM' and max_sev.v not in ['CRITICAL','HIGH'] %}{% set max_sev.v = 'MEDIUM' %}{% elif f.severity == 'LOW' and max_sev.v not in ['CRITICAL','HIGH','MEDIUM'] %}{% set max_sev.v = 'LOW' %}{% endif %}{% endfor %}{% endfor %}{% if max_sev.v == 'CRITICAL' %}'{{ "rgba(255,68,68,0.85)" }}'{% elif max_sev.v == 'HIGH' %}'{{ "rgba(255,140,0,0.85)" }}'{% elif max_sev.v == 'MEDIUM' %}'{{ "rgba(255,215,0,0.85)" }}'{% elif max_sev.v == 'LOW' %}'{{ "rgba(0,191,255,0.85)" }}'{% else %}'{{ "rgba(139,148,158,0.6)" }}'{% endif %}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+        if (document.getElementById('tacticBar')) {
+            new Chart(document.getElementById('tacticBar'), {
+                type: 'bar',
+                data: {
+                    labels: tacticLabels,
+                    datasets: [
+                        {
+                            label: 'Findings',
+                            data: tacticFindings,
+                            backgroundColor: tacticBarColors,
+                            borderColor: tacticBarColors.map(function(c){return c.replace('0.85','1').replace('0.6','1');}),
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            barPercentage: 0.7,
+                        },
+                        {
+                            label: 'Techniques',
+                            data: tacticTechniques,
+                            backgroundColor: 'rgba(99,110,123,0.4)',
+                            borderColor: 'rgba(99,110,123,0.7)',
+                            borderWidth: 1,
+                            borderRadius: 4,
+                            barPercentage: 0.7,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, color: chartColors.muted },
+                            grid: { color: 'rgba(48,54,61,0.5)' }
+                        },
+                        y: {
+                            ticks: { color: chartColors.text, font: { size: 11 } },
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { usePointStyle: true, pointStyle: 'rectRounded', padding: 16, font: { size: 11 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        /* Technique Heatmap — horizontal bar of top techniques by finding count */
+        var techData = [
+            {% for mr in scan.module_results if mr.findings | length > 0 %}
+            { label: '{{ mr.technique_id }} {{ mr.technique_name | truncate(30, true, "...") }}', count: {{ mr.findings | length }}, maxSev: '{% set ms = namespace(v="INFO") %}{% for f in mr.findings %}{% if f.severity == "CRITICAL" %}{% set ms.v = "CRITICAL" %}{% elif f.severity == "HIGH" and ms.v != "CRITICAL" %}{% set ms.v = "HIGH" %}{% elif f.severity == "MEDIUM" and ms.v not in ["CRITICAL","HIGH"] %}{% set ms.v = "MEDIUM" %}{% elif f.severity == "LOW" and ms.v not in ["CRITICAL","HIGH","MEDIUM"] %}{% set ms.v = "LOW" %}{% endif %}{% endfor %}{{ ms.v }}' }{% if not loop.last %},{% endif %}
+            {% endfor %}
+        ];
+        techData.sort(function(a,b){ return b.count - a.count; });
+        techData = techData.slice(0, 15);
+
+        var sevColorMap = { CRITICAL: chartColors.critical, HIGH: chartColors.high, MEDIUM: chartColors.medium, LOW: chartColors.low, INFO: chartColors.info };
+
+        if (document.getElementById('techniqueHeatmap') && techData.length > 0) {
+            new Chart(document.getElementById('techniqueHeatmap'), {
+                type: 'bar',
+                data: {
+                    labels: techData.map(function(d){return d.label;}),
+                    datasets: [{
+                        label: 'Findings',
+                        data: techData.map(function(d){return d.count;}),
+                        backgroundColor: techData.map(function(d){return sevColorMap[d.maxSev] || chartColors.info;}),
+                        borderColor: techData.map(function(d){var c = sevColorMap[d.maxSev] || chartColors.info; return c;}),
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.75,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1, color: chartColors.muted },
+                            grid: { color: 'rgba(48,54,61,0.5)' }
+                        },
+                        y: {
+                            ticks: { color: chartColors.text, font: { size: 10, family: "'SFMono-Regular', Consolas, monospace" } },
+                            grid: { display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.raw + ' finding(s) — Max severity: ' + techData[ctx.dataIndex].maxSev;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else if (document.getElementById('techniqueHeatmap')) {
+            document.getElementById('techniqueHeatmap').parentElement.innerHTML = '<p style="color: var(--clean); text-align: center; padding: 2rem 0;">No findings to display.</p>';
+        }
+    })();
 
     /* Sidebar active link tracking */
     (function() {
