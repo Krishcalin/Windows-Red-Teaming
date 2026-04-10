@@ -174,6 +174,8 @@ TECHNIQUE_TO_CIS: dict[str, list[str]] = {
     "T1134": ["5.4", "6.1", "6.8"],                   # Access Token Manipulation
     "T1574.001": ["2.5", "2.6", "4.1"],               # DLL Search Order Hijacking
     "T1574.002": ["2.5", "2.6", "10.5"],              # DLL Side-Loading
+    "T1210": ["7.1", "7.4", "18.3"],                  # Exploitation of Remote Services (CVE-2026-21533)
+    "T1068": ["7.1", "7.4", "18.3"],                  # Exploitation for Privilege Escalation (CVE-2026-21519)
 
     # --- Execution (TA0002) ---
     "T1059.001": ["2.6", "2.7", "10.5"],              # PowerShell
@@ -190,6 +192,8 @@ TECHNIQUE_TO_CIS: dict[str, list[str]] = {
     "T1562.002": ["8.2", "8.5", "8.9"],               # Disable Windows Event Logging
     "T1036": ["2.1", "2.5", "10.7"],                  # Masquerading
     "T1070.001": ["8.2", "8.3", "8.9"],               # Clear Windows Event Logs
+    "T1218": ["2.5", "2.6", "10.5"],                  # System Binary Proxy Execution (CVE-2026-21513)
+    "T1553.005": ["2.5", "10.1", "10.5"],             # MOTW Bypass (CVE-2026-21510)
 
     # --- Lateral Movement (TA0008) ---
     "T1021.001": ["4.3", "6.4", "12.7"],              # RDP
@@ -244,6 +248,8 @@ TECHNIQUE_TO_NIST: dict[str, list[str]] = {
     "T1134": ["AC-3", "AC-5", "AC-6"],                # Access Token Manipulation
     "T1574.001": ["CM-6", "CM-7", "SI-7"],            # DLL Search Order Hijacking
     "T1574.002": ["CM-7", "SI-7", "CM-11"],           # DLL Side-Loading
+    "T1210": ["SI-2", "SI-5", "RA-5"],                # Exploitation of Remote Services (CVE-2026-21533)
+    "T1068": ["SI-2", "SI-7", "RA-5"],                # Exploitation for Privilege Escalation (CVE-2026-21519)
 
     # --- Execution (TA0002) ---
     "T1059.001": ["CM-7", "SI-7", "SI-16"],           # PowerShell
@@ -260,6 +266,8 @@ TECHNIQUE_TO_NIST: dict[str, list[str]] = {
     "T1562.002": ["AU-2", "AU-9", "AU-12"],           # Disable Windows Event Logging
     "T1036": ["CM-7", "SI-3", "SI-7"],                # Masquerading
     "T1070.001": ["AU-9", "AU-3", "AU-6"],            # Clear Windows Event Logs
+    "T1218": ["CM-7", "SI-7", "CM-11"],               # System Binary Proxy Execution (CVE-2026-21513)
+    "T1553.005": ["CM-6", "SI-3", "SI-7"],            # MOTW Bypass (CVE-2026-21510)
 
     # --- Lateral Movement (TA0008) ---
     "T1021.001": ["AC-17", "CM-6", "SC-8"],           # RDP

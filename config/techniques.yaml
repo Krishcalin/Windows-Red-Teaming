@@ -37,6 +37,8 @@ techniques:
   T1574: true      # Hijack Execution Flow
   T1574.001: true  # DLL Search Order Hijacking
   T1574.002: true  # DLL Side-Loading
+  T1210: true      # Exploitation of Remote Services (CVE-2026-21533 RDP EoP)
+  T1068: true      # Exploitation for Privilege Escalation (CVE-2026-21519 DWM)
 
   # --- Defense Evasion (TA0005) ---
   T1562: true      # Impair Defenses
@@ -46,6 +48,8 @@ techniques:
   T1070: true      # Indicator Removal
   T1070.001: true  # Clear Windows Event Logs
   T1027: true      # Obfuscated Files or Information
+  T1218: true      # System Binary Proxy Execution (CVE-2026-21513 MSHTML Bypass)
+  T1553.005: true  # Subvert Trust Controls: MOTW Bypass (CVE-2026-21510 SmartScreen)
 
   # --- Credential Access (TA0006) ---
   T1003: true      # OS Credential Dumping

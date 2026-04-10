@@ -4,13 +4,13 @@
 
 An open-source Python-based active scanning tool for authorized red team security testing on
 Windows systems, aligned with the MITRE ATT&CK Framework. The tool uses a dual-mode architecture:
-29 Python modules for passive security auditing and active simulation, plus 202 YAML-based
+33 Python modules for passive security auditing and active simulation, plus 221 YAML-based
 atomic tests (inspired by Atomic Red Team) for technique execution across all 13 ATT&CK tactics.
 
 **Repository**: https://github.com/Krishcalin/Windows-Red-Teaming
 **License**: MIT
 **Python**: 3.10+
-**Status**: Phases 1-5 complete (29 Python modules + 202 YAML atomic tests)
+**Status**: Phases 1-6 complete (33 Python modules + 221 YAML atomic tests + CIS/NIST compliance mapping)
 
 ---
 
@@ -39,9 +39,9 @@ Windows-Red-Teaming/
 │   ├── discovery/                 # TA0007 — 8 modules (T1082, T1087, T1069, T1046, T1083, T1057, T1049, T1016)
 │   ├── execution/                 # TA0002 — 3 modules (T1059.001, T1059.003, T1047)
 │   ├── persistence/               # TA0003 — 3 modules (T1053.005, T1547.001, T1546.001)
-│   ├── privilege_escalation/      # TA0004 — 4 modules (T1548.002, T1134, T1574.001, T1574.002)
+│   ├── privilege_escalation/      # TA0004 — 6 modules (T1548.002, T1134, T1574.001, T1574.002, T1210, T1068)
 │   ├── credential_access/         # TA0006 — 6 modules (T1003.001/.002/.003, T1558.003, T1552.001, T1110)
-│   ├── defense_evasion/           # TA0005 — 4 modules (T1562.001/.002, T1036, T1070.001)
+│   ├── defense_evasion/           # TA0005 — 6 modules (T1562.001/.002, T1036, T1070.001, T1218, T1553.005)
 │   ├── lateral_movement/          # TA0008 — empty (covered by YAML atomics)
 │   ├── collection/                # TA0009 — empty (covered by YAML atomics)
 │   ├── command_and_control/       # TA0011 — empty (covered by YAML atomics)
@@ -67,7 +67,7 @@ Windows-Red-Teaming/
 │       └── stealth.yaml           # 4 minimal-footprint checks
 ├── templates/
 │   └── report.html                # Jinja2 dark-themed HTML report template
-├── tests/                         # pytest test suite (122 tests)
+├── tests/                         # pytest test suite (194 tests)
 │   ├── conftest.py                # Shared fixtures (mock_session, sample_target, sample_finding)
 │   ├── test_engine.py             # ScanEngine module discovery + authorization banner
 │   ├── test_models.py             # Finding, ModuleResult, ScanResult dataclass tests
@@ -165,7 +165,7 @@ Session interface methods: `connect()`, `disconnect()`, `run_cmd()`, `run_powers
 
 ## MITRE ATT&CK Tactic Coverage
 
-### Python Modules (29 total, 7 tactics)
+### Python Modules (33 total, 7 tactics)
 
 | Tactic | ID | Modules | Techniques |
 |--------|----|:-------:|------------|
@@ -173,20 +173,20 @@ Session interface methods: `connect()`, `disconnect()`, `run_cmd()`, `run_powers
 | Discovery | TA0007 | 8 | T1082, T1087, T1069, T1046, T1083, T1057, T1049, T1016 |
 | Execution | TA0002 | 3 | T1059.001, T1059.003, T1047 |
 | Persistence | TA0003 | 3 | T1053.005, T1547.001, T1546.001 |
-| Privilege Escalation | TA0004 | 4 | T1548.002, T1134, T1574.001, T1574.002 |
+| Privilege Escalation | TA0004 | 6 | T1548.002, T1134, T1574.001, T1574.002, **T1210** (CVE-2026-21533), **T1068** (CVE-2026-21519) |
 | Credential Access | TA0006 | 6 | T1003.001, T1003.002, T1003.003, T1558.003, T1552.001, T1110 |
-| Defense Evasion | TA0005 | 4 | T1562.001, T1562.002, T1036, T1070.001 |
+| Defense Evasion | TA0005 | 6 | T1562.001, T1562.002, T1036, T1070.001, **T1218** (CVE-2026-21513), **T1553.005** (CVE-2026-21510) |
 
-### YAML Atomic Tests (202 tests, 61 techniques, 11 tactics)
+### YAML Atomic Tests (221 tests, 65 techniques, 11 tactics)
 
 | Tactic | Techniques | Tests | Top technique by test count |
 |--------|:----------:|:-----:|---------------------------|
 | Discovery | 19 | 73 | T1082 (10), T1059.001 (7), T1087.002 (5) |
 | Execution | 6 | 24 | T1059.001 (7), T1047 (4), T1053.005 (4) |
 | Persistence | 7 | 20 | T1547.001 (4), T1546.008 (3), T1543.003 (3) |
-| Defense Evasion | 4 | 17 | T1562.001 (6), T1562.002 (4), T1112 (4) |
+| Defense Evasion | 6 | 27 | T1562.001 (6), **T1218 CVE-2026-21513** (5), **T1553.005 CVE-2026-21510** (5), T1562.002 (4), T1112 (4) |
 | Credential Access | 6 | 20 | T1003.001 (4), T1552.001 (4), T1558.003 (3) |
-| Privilege Escalation | 1 | 4 | T1548.002 (4) |
+| Privilege Escalation | 3 | 13 | **T1210 CVE-2026-21533** (5), T1548.002 (4), **T1068 CVE-2026-21519** (4) |
 | Lateral Movement | 4 | 12 | T1021.001 (4), T1021.002 (3), T1021.006 (3) |
 | Collection | 5 | 8 | T1113 (2), T1560.001 (2), T1219 (2) |
 | Command & Control | 3 | 9 | T1105 (5), T1071.001 (2), T1219 (2) |
@@ -269,15 +269,21 @@ Session interface methods: `connect()`, `disconnect()`, `run_cmd()`, `run_powers
 - [x] Impact: T1489 Service Stop, T1490 Inhibit Recovery, T1529 Shutdown, T1485 Destruction, T1531 Account Removal
 - [x] 37 new pytest tests (test_atomic_models.py + test_atomic_runner.py)
 
-### Phase 6 — Reporting & ATT&CK Integration
+### Phase 6 — Reporting, Compliance & CVE Coverage (COMPLETE)
 - [x] ATT&CK Navigator JSON layer export (`core/mitre_mapper.py`)
 - [x] HTML report with executive summary (`core/reporter.py` + `templates/report.html`)
 - [x] JSON/CSV machine-readable output
+- [x] CIS Benchmark / NIST 800-53 compliance mapping (`core/compliance_mapper.py`)
+- [x] February 2026 Patch Tuesday CVE modules:
+  - [x] CVE-2026-21533 — RDP EoP (T1210, Privilege Escalation, CVSS 7.8, actively exploited)
+  - [x] CVE-2026-21519 — DWM SYSTEM privesc (T1068, Privilege Escalation, CVSS 7.8, actively exploited)
+  - [x] CVE-2026-21513 — MSHTML security bypass (T1218, Defense Evasion, CVSS 8.8, publicly disclosed)
+  - [x] CVE-2026-21510 — SmartScreen bypass (T1553.005, Defense Evasion, CVSS 8.8, publicly disclosed)
+- [x] 19 YAML atomic tests for all 4 CVEs (patch checks, IoC detection, configuration enumeration)
 - [ ] Per-technique detail pages with mitigations
-- [ ] CIS Benchmark / NIST 800-53 mapping
 
 ### Phase 7 — Testing & Hardening
-- [x] Unit tests (122 passing — 85 module + 37 atomic framework)
+- [x] Unit tests (194 passing — 85 module + 37 atomic framework + 72 reporting/compliance/CVE)
 - [ ] Integration tests against lab VMs (Win10/11/2019/2022)
 - [ ] Safety controls validation (dry-run, rollback)
 - [ ] CI/CD pipeline (GitHub Actions)

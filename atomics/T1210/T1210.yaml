@@ -1,0 +1,91 @@
+attack_technique: T1210
+display_name: "Exploitation of Remote Services — RDP EoP (CVE-2026-21533)"
+tactic: Privilege Escalation
+atomic_tests:
+  - name: "Check RDP Configuration"
+    auto_generated_guid: aa210001-0001-0001-0001-000000000001
+    description: |
+      Enumerates Remote Desktop configuration including NLA, restricted admin,
+      and terminal server settings relevant to CVE-2026-21533.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        reg query "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections
+        reg query "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v UserAuthentication
+        reg query "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v DisableRestrictedAdmin
+        netstat -an | findstr ":3389"
+      elevation_required: false
+
+  - name: "Enumerate Administrators Group Membership"
+    auto_generated_guid: aa210001-0001-0001-0001-000000000002
+    description: |
+      Lists current Administrators group members. CVE-2026-21533 exploitation
+      adds rogue accounts to this group.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        net localgroup Administrators
+      elevation_required: false
+
+  - name: "Check for Recent Admin Group Changes (Event ID 4732)"
+    auto_generated_guid: aa210001-0001-0001-0001-000000000003
+    description: |
+      Queries Security event log for Event ID 4732 (member added to security group)
+      targeting the Administrators group in the past 30 days. This is a key IoC
+      for CVE-2026-21533 exploitation.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-WinEvent -FilterHashtable @{
+          LogName='Security'; Id=4732;
+          StartTime=(Get-Date).AddDays(-30)
+        } -MaxEvents 20 -ErrorAction SilentlyContinue |
+        Where-Object { $_.Message -match 'Administrators' } |
+        Format-List TimeCreated, Message
+      elevation_required: true
+
+  - name: "Check February 2026 Patch Status"
+    auto_generated_guid: aa210001-0001-0001-0001-000000000004
+    description: |
+      Verifies whether the February 2026 Patch Tuesday update has been installed,
+      which remediates CVE-2026-21533.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $patches = Get-HotFix | Where-Object { $_.InstalledOn -ge '2026-02-01' }
+        if ($patches) {
+          Write-Output "[+] February 2026+ patches installed:"
+          $patches | Format-Table HotFixID, InstalledOn, Description
+        } else {
+          Write-Output "[!] VULNERABLE: No patches from February 2026 or later found"
+          Write-Output "[!] System is likely vulnerable to CVE-2026-21533"
+        }
+      elevation_required: false
+
+  - name: "Simulate RDP Admin Enumeration via PowerShell"
+    auto_generated_guid: aa210001-0001-0001-0001-000000000005
+    description: |
+      Simulates attacker reconnaissance of RDP configuration and admin
+      group membership that precedes CVE-2026-21533 exploitation.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Write-Output "=== RDP Configuration ==="
+        Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server' -Name fDenyTSConnections -ErrorAction SilentlyContinue
+        Write-Output "`n=== NLA Status ==="
+        Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name UserAuthentication -ErrorAction SilentlyContinue
+        Write-Output "`n=== Administrators Group ==="
+        Get-LocalGroupMember -Group Administrators -ErrorAction SilentlyContinue
+        Write-Output "`n=== RDP Sessions ==="
+        qwinsta 2>$null
+      elevation_required: false

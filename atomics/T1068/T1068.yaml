@@ -1,0 +1,88 @@
+attack_technique: T1068
+display_name: "Exploitation for Privilege Escalation — DWM Privesc (CVE-2026-21519)"
+tactic: Privilege Escalation
+atomic_tests:
+  - name: "Enumerate DWM Process and Privileges"
+    auto_generated_guid: bb068001-0001-0001-0001-000000000001
+    description: |
+      Enumerates the Desktop Window Manager (dwm.exe) process details including
+      privilege level and loaded modules. DWM runs as SYSTEM and is the attack
+      surface for CVE-2026-21519.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        Get-Process dwm -ErrorAction SilentlyContinue |
+        Select-Object Id, ProcessName, StartTime,
+          @{N='Modules';E={$_.Modules.Count}},
+          @{N='Threads';E={$_.Threads.Count}},
+          @{N='WorkingSet_MB';E={[math]::Round($_.WorkingSet64/1MB,2)}} |
+        Format-List
+      elevation_required: false
+
+  - name: "Check DWM File Integrity"
+    auto_generated_guid: bb068001-0001-0001-0001-000000000002
+    description: |
+      Verifies the authenticode signature and SHA256 hash of dwm.exe.
+      A tampered or unsigned dwm.exe may indicate exploitation of CVE-2026-21519.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $dwm = "$env:SystemRoot\System32\dwm.exe"
+        if (Test-Path $dwm) {
+          $sig = Get-AuthenticodeSignature $dwm
+          $hash = (Get-FileHash $dwm -Algorithm SHA256).Hash
+          Write-Output "Path: $dwm"
+          Write-Output "Signature Status: $($sig.Status)"
+          Write-Output "Signer: $($sig.SignerCertificate.Subject)"
+          Write-Output "SHA256: $hash"
+        } else {
+          Write-Output "[!] dwm.exe not found — unexpected"
+        }
+      elevation_required: false
+
+  - name: "Detect DWM Child Processes (IoC)"
+    auto_generated_guid: bb068001-0001-0001-0001-000000000003
+    description: |
+      Checks for child processes spawned by dwm.exe. DWM should not spawn
+      child processes; any found indicate possible CVE-2026-21519 exploitation.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $dwmPids = (Get-Process -Name dwm -ErrorAction SilentlyContinue).Id
+        if ($dwmPids) {
+          $children = Get-CimInstance Win32_Process |
+            Where-Object { $_.ParentProcessId -in $dwmPids }
+          if ($children) {
+            Write-Output "[!] ALERT: Child processes found under dwm.exe:"
+            $children | Format-Table Name, ProcessId, ParentProcessId, CommandLine -AutoSize
+          } else {
+            Write-Output "[+] No child processes under dwm.exe — normal"
+          }
+        }
+      elevation_required: true
+
+  - name: "Check February 2026 Patch Status for CVE-2026-21519"
+    auto_generated_guid: bb068001-0001-0001-0001-000000000004
+    description: |
+      Verifies whether the February 2026 Patch Tuesday update addressing
+      CVE-2026-21519 (DWM type confusion) has been installed.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $patches = Get-HotFix | Where-Object { $_.InstalledOn -ge '2026-02-01' }
+        if ($patches) {
+          Write-Output "[+] February 2026+ patches installed:"
+          $patches | Format-Table HotFixID, InstalledOn, Description
+        } else {
+          Write-Output "[!] VULNERABLE: No patches from February 2026 or later found"
+          Write-Output "[!] System is likely vulnerable to CVE-2026-21519 (DWM SYSTEM privesc)"
+        }
+      elevation_required: false

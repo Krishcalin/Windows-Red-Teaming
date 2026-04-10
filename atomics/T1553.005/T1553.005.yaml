@@ -1,0 +1,110 @@
+attack_technique: T1553.005
+display_name: "Subvert Trust Controls: Mark-of-the-Web Bypass (CVE-2026-21510)"
+tactic: Defense Evasion
+atomic_tests:
+  - name: "Check SmartScreen Configuration"
+    auto_generated_guid: dd553001-0001-0001-0001-000000000001
+    description: |
+      Enumerates SmartScreen settings across multiple registry locations.
+      CVE-2026-21510 bypasses these protections via the Windows Shell.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        echo === SmartScreen System Setting ===
+        reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v SmartScreenEnabled 2>nul
+        echo === SmartScreen Policy ===
+        reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows\System" /v EnableSmartScreen 2>nul
+        echo === SmartScreen App Install Control ===
+        reg query "HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\SmartScreen" /v ConfigureAppInstallControlEnabled 2>nul
+      elevation_required: false
+
+  - name: "Check Mark of the Web (MOTW) Settings"
+    auto_generated_guid: dd553001-0001-0001-0001-000000000002
+    description: |
+      Checks Attachment Manager and MOTW zone information settings.
+      Disabled MOTW weakens security and amplifies CVE-2026-21510 impact.
+    supported_platforms:
+      - windows
+    executor:
+      name: command_prompt
+      command: |
+        echo === MOTW Zone Information ===
+        reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Attachments" /v SaveZoneInformation 2>nul
+        echo === Hide Zone Info on Properties ===
+        reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\Attachments" /v HideZoneInfoOnProperties 2>nul
+      elevation_required: false
+
+  - name: "Check Attack Surface Reduction (ASR) Rules"
+    auto_generated_guid: dd553001-0001-0001-0001-000000000003
+    description: |
+      Enumerates Windows Defender ASR rules. Missing ASR rules represent
+      a defense gap that amplifies SmartScreen bypass attacks.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        try {
+          $pref = Get-MpPreference -ErrorAction Stop
+          Write-Output "=== ASR Rules ==="
+          $ids = $pref.AttackSurfaceReductionRules_Ids
+          $actions = $pref.AttackSurfaceReductionRules_Actions
+          if ($ids) {
+            for ($i = 0; $i -lt $ids.Count; $i++) {
+              $action = if ($actions -and $i -lt $actions.Count) { $actions[$i] } else { 'Unknown' }
+              Write-Output "  Rule: $($ids[$i]) = $action"
+            }
+          } else {
+            Write-Output "  [!] No ASR rules configured"
+          }
+          Write-Output "`n=== Network Protection ==="
+          Write-Output "  EnableNetworkProtection: $($pref.EnableNetworkProtection)"
+        } catch {
+          Write-Output "[!] Unable to query Defender preferences: $_"
+        }
+      elevation_required: true
+
+  - name: "Test MOTW on Downloaded File"
+    auto_generated_guid: dd553001-0001-0001-0001-000000000004
+    description: |
+      Creates a test file with a Zone.Identifier ADS (Alternate Data Stream)
+      to verify that MOTW is processed correctly. CVE-2026-21510 allows
+      bypassing this mechanism.
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $testFile = "$env:TEMP\motw_test.txt"
+        Set-Content -Path $testFile -Value "MOTW test file"
+        Set-Content -Path "${testFile}:Zone.Identifier" -Value "[ZoneTransfer]`nZoneId=3"
+        Write-Output "Created test file: $testFile"
+        Write-Output "Zone.Identifier ADS content:"
+        Get-Content -Path "${testFile}:Zone.Identifier"
+        Write-Output "`nFile properties:"
+        Get-Item $testFile | Select-Object FullName, Length, CreationTime
+      cleanup_command: |
+        Remove-Item "$env:TEMP\motw_test.txt" -Force -ErrorAction SilentlyContinue
+      elevation_required: false
+
+  - name: "Check February 2026 Patch Status for CVE-2026-21510"
+    auto_generated_guid: dd553001-0001-0001-0001-000000000005
+    description: |
+      Verifies whether the February 2026 Patch Tuesday update has been installed,
+      which remediates CVE-2026-21510 (SmartScreen bypass).
+    supported_platforms:
+      - windows
+    executor:
+      name: powershell
+      command: |
+        $patches = Get-HotFix | Where-Object { $_.InstalledOn -ge '2026-02-01' }
+        if ($patches) {
+          Write-Output "[+] February 2026+ patches installed:"
+          $patches | Format-Table HotFixID, InstalledOn, Description
+        } else {
+          Write-Output "[!] VULNERABLE: No patches from February 2026 or later found"
+          Write-Output "[!] System is likely vulnerable to CVE-2026-21510 (SmartScreen bypass)"
+        }
+      elevation_required: false

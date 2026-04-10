@@ -4,16 +4,16 @@
 
 <p align="center">
   <strong>Python-based Windows red team scanner with dual-mode architecture:<br/>
-  29 Python audit modules + 202 Atomic Red Team-style YAML tests across 13 MITRE ATT&CK tactics</strong>
+  33 Python audit modules + 221 Atomic Red Team-style YAML tests across 13 MITRE ATT&CK tactics</strong>
 </p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/python-3.10%2B-blue?style=flat-square&logo=python&logoColor=white"/>
   <img src="https://img.shields.io/badge/license-MIT-orange?style=flat-square"/>
-  <img src="https://img.shields.io/badge/techniques-90-ef4444?style=flat-square"/>
-  <img src="https://img.shields.io/badge/atomic_tests-202-dc2626?style=flat-square"/>
+  <img src="https://img.shields.io/badge/techniques-94-ef4444?style=flat-square"/>
+  <img src="https://img.shields.io/badge/atomic_tests-221-dc2626?style=flat-square"/>
   <img src="https://img.shields.io/badge/tactics-13-f59e0b?style=flat-square"/>
-  <img src="https://img.shields.io/badge/tests-122_passing-22c55e?style=flat-square"/>
+  <img src="https://img.shields.io/badge/tests-194_passing-22c55e?style=flat-square"/>
 </p>
 
 ---
@@ -24,8 +24,8 @@
 
 | Layer | Source | Count | Purpose |
 |-------|--------|-------|---------|
-| **Python modules** | `modules/` | 29 modules across 7 tactics | Passive security posture audit (`check`) + active simulation (`simulate`) with cleanup |
-| **YAML atomic tests** | `atomics/` | 202 tests across 61 techniques | Atomic Red Team-style technique execution with input arguments, dependencies, and cleanup |
+| **Python modules** | `modules/` | 33 modules across 7 tactics | Passive security posture audit (`check`) + active simulation (`simulate`) with cleanup |
+| **YAML atomic tests** | `atomics/` | 221 tests across 65 techniques | Atomic Red Team-style technique execution with input arguments, dependencies, and cleanup |
 
 The tool operates in three modes:
 
@@ -39,7 +39,7 @@ The tool operates in three modes:
 
 ## Key Features
 
-- **Dual-mode architecture** -- 29 Python modules (passive check + active simulate) + 202 YAML atomic tests across 61 techniques
+- **Dual-mode architecture** -- 33 Python modules (passive check + active simulate) + 221 YAML atomic tests across 65 techniques
 - **Atomic Red Team-style YAML tests** -- data-driven test definitions with `#{arg}` templating, dependencies (`prereq_command` / `get_prereq_command`), cleanup commands, and executor types (`powershell`, `command_prompt`, `manual`)
 - **Module auto-discovery** -- drop a Python module in `modules/<tactic>/` or a YAML file in `atomics/<technique_id>/` and it is automatically picked up
 - **Session abstraction** -- Local execution via subprocess, Remote via WinRM (pypsrp), with SMB/WMI planned
@@ -60,15 +60,15 @@ The tool operates in three modes:
 | **Discovery** | TA0007 | 8 | 19 techniques, 73 tests | T1082, T1087, T1069, T1046, T1057, T1016, T1049, T1083, T1033, T1018, T1135, T1482, T1201, T1518.001, T1012, T1007, T1124, T1615, T1614.001 |
 | **Execution** | TA0002 | 3 | 6 techniques, 24 tests | T1059.001 PowerShell (7), T1059.003 Command Shell (4), T1047 WMI (4), T1053.005 Scheduled Task (4), T1569.002 Service Execution (3), T1106 Native API (2) |
 | **Persistence** | TA0003 | 3 | 7 techniques, 20 tests | T1547.001 Run Keys (4), T1546.003 WMI Event Sub (2), T1546.008 Accessibility Features (3), T1543.003 Windows Service (3), T1136.001 Local Account (3), T1547.004 Winlogon (2) |
-| **Privilege Escalation** | TA0004 | 4 | 1 technique, 4 tests | T1548.002 UAC Bypass (4 methods: fodhelper, eventvwr, computerdefaults), T1134, T1574.001, T1574.002 |
-| **Defense Evasion** | TA0005 | 4 | 4 techniques, 17 tests | T1562.001 Disable Tools (6), T1562.002 Disable Logging (4), T1112 Modify Registry (4), T1070.001 Clear Logs (3) |
+| **Privilege Escalation** | TA0004 | 6 | 3 techniques, 13 tests | T1548.002 UAC Bypass (4), T1134, T1574.001, T1574.002, **T1210 RDP EoP CVE-2026-21533** (5), **T1068 DWM Privesc CVE-2026-21519** (4) |
+| **Defense Evasion** | TA0005 | 6 | 6 techniques, 27 tests | T1562.001 Disable Tools (6), T1562.002 Disable Logging (4), T1112 Modify Registry (4), T1070.001 Clear Logs (3), **T1218 MSHTML Bypass CVE-2026-21513** (5), **T1553.005 SmartScreen Bypass CVE-2026-21510** (5) |
 | **Credential Access** | TA0006 | 6 | 6 techniques, 20 tests | T1003.001 LSASS (4), T1003.002 SAM (3), T1003.003 NTDS (3), T1558.003 Kerberoasting (3), T1552.001 Creds in Files (4), T1110.003 Password Spray (3) |
 | **Lateral Movement** | TA0008 | -- | 4 techniques, 12 tests | T1021.001 RDP (4), T1021.002 SMB Shares (3), T1021.006 WinRM (3), T1550.002 Pass the Hash (2) |
 | **Collection** | TA0009 | -- | 5 techniques, 8 tests | T1113 Screen Capture (2), T1560.001 Archive (2), T1074.001 Staging (1), T1115 Clipboard (1), T1219 RAT Detection (2) |
 | **Command & Control** | TA0011 | -- | 3 techniques, 9 tests | T1105 Ingress Transfer (5 methods: WebClient, IWR, certutil, bitsadmin, curl), T1071.001 Web Protocols (2), T1219 Remote Access (2) |
 | **Exfiltration** | TA0010 | -- | 1 technique, 3 tests | T1048.003 DNS, ICMP, SMB exfil simulation |
 | **Impact** | TA0040 | -- | 5 techniques, 12 tests | T1490 Inhibit Recovery (4), T1489 Service Stop (2), T1529 Shutdown (2), T1485 Data Destruction (2), T1531 Account Access Removal (2) |
-| **Total** | | **29 modules** | **61 techniques, 202 tests** | **~90 unique techniques** |
+| **Total** | | **33 modules** | **65 techniques, 221 tests** | **~94 unique techniques** |
 
 ---
 
@@ -140,9 +140,9 @@ Windows-Red-Teaming/
 |   |-- discovery/                   # TA0007 — 8 modules (T1082, T1087, T1069, T1046, T1083, T1057, T1049, T1016)
 |   |-- execution/                   # TA0002 — 3 modules (T1059.001, T1059.003, T1047)
 |   |-- persistence/                 # TA0003 — 3 modules (T1053.005, T1547.001, T1546.001)
-|   |-- privilege_escalation/        # TA0004 — 4 modules (T1548.002, T1134, T1574.001, T1574.002)
+|   |-- privilege_escalation/        # TA0004 — 6 modules (T1548.002, T1134, T1574.001, T1574.002, T1210, T1068)
 |   |-- credential_access/           # TA0006 — 6 modules (T1003.001/.002/.003, T1558.003, T1552.001, T1110)
-|   |-- defense_evasion/             # TA0005 — 4 modules (T1562.001/.002, T1036, T1070.001)
+|   |-- defense_evasion/             # TA0005 — 6 modules (T1562.001/.002, T1036, T1070.001, T1218, T1553.005)
 |   |-- lateral_movement/            # TA0008 — empty (covered by YAML atomics)
 |   |-- collection/                  # TA0009 — empty (covered by YAML atomics)
 |   |-- command_and_control/         # TA0011 — empty (covered by YAML atomics)
@@ -156,11 +156,11 @@ Windows-Red-Teaming/
 |   |-- T1059.001/T1059.001.yaml    #  7 tests — PowerShell
 |   |-- T1562.001/T1562.001.yaml    #  6 tests — Disable Security Tools
 |   |-- T1105/T1105.yaml            #  5 tests — Ingress Tool Transfer
-|   +-- ... (61 technique directories, 202 atomic tests total)
+|   +-- ... (65 technique directories, 221 atomic tests total)
 |
 |-- config/
 |   |-- settings.example.yaml        # Template for targets, credentials, output settings
-|   |-- techniques.yaml              # Enable/disable individual techniques (99 entries)
+|   |-- techniques.yaml              # Enable/disable individual techniques (103 entries)
 |   +-- profiles/
 |       |-- quick.yaml               # 8 high-value techniques
 |       |-- full.yaml                # All discovered modules
@@ -169,7 +169,7 @@ Windows-Red-Teaming/
 |-- templates/
 |   +-- report.html                  # Jinja2 dark-themed HTML report template
 |
-|-- tests/                           # 122 pytest tests
+|-- tests/                           # 194 pytest tests
 |   |-- conftest.py                  # Shared fixtures (mock_session, sample_target, etc.)
 |   |-- test_engine.py               # ScanEngine discovery + authorization tests
 |   |-- test_models.py               # Finding, ModuleResult, ScanResult tests
@@ -311,7 +311,7 @@ atomic_tests:
 
 ```bash
 pip install pytest pytest-mock pytest-cov
-python -m pytest tests/ -v                    # All 122 tests
+python -m pytest tests/ -v                    # All 194 tests
 python -m pytest tests/test_atomic_runner.py  # Atomic framework only
 python -m pytest tests/test_modules/ -v       # Module tests only
 ```
@@ -339,8 +339,8 @@ python -m pytest tests/test_modules/ -v       # Module tests only
 - [x] **Phase 2** -- Discovery & Reconnaissance (9 Python modules)
 - [x] **Phase 3** -- Credential Access & Privilege Escalation (10 Python modules)
 - [x] **Phase 4** -- Execution, Persistence & Defense Evasion (10 Python modules)
-- [x] **Phase 5** -- Atomic test library (61 techniques, 202 YAML tests, all 13 tactics)
-- [ ] **Phase 6** -- Per-technique detail pages, CIS/NIST mapping
+- [x] **Phase 5** -- Atomic test library (65 techniques, 221 YAML tests, all 13 tactics)
+- [x] **Phase 6** -- CIS Benchmark / NIST 800-53 compliance mapping, February 2026 Patch Tuesday CVE modules
 - [ ] **Phase 7** -- Integration tests, CI/CD pipeline, user documentation
 
 ---
