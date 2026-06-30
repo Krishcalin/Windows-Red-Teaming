@@ -280,7 +280,7 @@ Session interface methods: `connect()`, `disconnect()`, `run_cmd()`, `run_powers
   - [x] CVE-2026-21513 — MSHTML security bypass (T1218, Defense Evasion, CVSS 8.8, publicly disclosed)
   - [x] CVE-2026-21510 — SmartScreen bypass (T1553.005, Defense Evasion, CVSS 8.8, publicly disclosed)
 - [x] 19 YAML atomic tests for all 4 CVEs (patch checks, IoC detection, configuration enumeration)
-- [ ] Per-technique detail pages with mitigations
+- [x] Per-technique detail pages with mitigations (collapsible sections in HTML report, MITRE M-code mitigations from each module's `get_mitigations()`)
 
 ### Phase 7 — Testing & Hardening
 - [x] Unit tests (201 passing — module + atomic framework + reporting/compliance/CVE + dry-run plan)

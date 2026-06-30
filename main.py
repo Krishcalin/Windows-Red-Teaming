@@ -25,6 +25,18 @@ from core.logger import setup_logging
 from core.mitre_mapper import MitreMapper
 from core.reporter import Reporter
 
+# Force UTF-8 stdout/stderr so Rich banners and tables (which use box-drawing
+# and em-dash characters) render correctly on Windows consoles and when output
+# is piped or redirected — otherwise Python falls back to cp1252 and Rich
+# raises UnicodeEncodeError before the scan even begins.
+for _stream in (sys.stdout, sys.stderr):
+    _reconfigure = getattr(_stream, "reconfigure", None)
+    if _reconfigure is not None:
+        try:
+            _reconfigure(encoding="utf-8")
+        except (ValueError, OSError):
+            pass
+
 console = Console()
 
 _SEV_STYLE = {
