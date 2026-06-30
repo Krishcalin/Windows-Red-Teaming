@@ -283,11 +283,15 @@ Session interface methods: `connect()`, `disconnect()`, `run_cmd()`, `run_powers
 - [ ] Per-technique detail pages with mitigations
 
 ### Phase 7 — Testing & Hardening
-- [x] Unit tests (194 passing — 85 module + 37 atomic framework + 72 reporting/compliance/CVE)
-- [ ] Integration tests against lab VMs (Win10/11/2019/2022)
-- [ ] Safety controls validation (dry-run, rollback)
-- [ ] CI/CD pipeline (GitHub Actions)
-- [ ] User documentation
+- [x] Unit tests (201 passing — module + atomic framework + reporting/compliance/CVE + dry-run plan)
+- [x] In-process integration tests (`tests/test_integration.py` — scan flow, safety controls, report pipeline, module discovery, dry-run plan)
+- [x] Safety controls validation:
+  - [x] `--dry-run` plan preview (`ScanEngine.plan()`) — resolves filters and lists every Python module + atomic test that would run, with zero target contact
+  - [x] Automatic cleanup/rollback after every simulation (runs even when `simulate()` raises)
+  - [x] `SAFE_MODE` modules never execute `simulate()`; OS guard auto-skips unsupported targets
+- [x] CI/CD pipeline (GitHub Actions — `.github/workflows/ci.yml`)
+- [x] User documentation (`docs/USAGE.md`)
+- [ ] Integration tests against live lab VMs (Win10/11/2019/2022) — manual, environment-dependent
 
 ---
 
@@ -339,6 +343,10 @@ Optional (testing): `pytest>=7.0`, `pytest-cov>=4.0`, `pytest-mock>=3.0`
 ## Running the Tool
 
 ```bash
+# ── Dry-run (preview the plan; no connection, no execution) ────
+python main.py scan --target 192.168.1.10 --profile quick --dry-run
+python main.py scan --target 192.168.1.10 --profile full --simulate --dry-run
+
 # ── Passive scanning (check mode) ──────────────────────────────
 python main.py scan --target localhost --profile quick
 python main.py scan --target 192.168.1.10 --profile full

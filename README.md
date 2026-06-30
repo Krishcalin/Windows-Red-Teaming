@@ -27,10 +27,11 @@
 | **Python modules** | `modules/` | 33 modules across 7 tactics | Passive security posture audit (`check`) + active simulation (`simulate`) with cleanup |
 | **YAML atomic tests** | `atomics/` | 221 tests across 65 techniques | Atomic Red Team-style technique execution with input arguments, dependencies, and cleanup |
 
-The tool operates in three modes:
+The tool operates in these modes:
 
 | Mode | Command | Behavior |
 |------|---------|----------|
+| **Dry-run** | `scan --target <host> --dry-run` | Previews exactly which modules/atomics would run. No connection, no execution, no changes. |
 | **Check** *(default)* | `scan --target <host>` | Passive, read-only security audit. Safe for production. |
 | **Simulate** | `scan --target <host> --simulate` | Python modules simulate + YAML atomic tests execute, with automatic cleanup. |
 | **Run Atomic** | `run-atomic --target <host> --technique <ID>` | Execute YAML atomic tests directly for a single technique. |
@@ -89,7 +90,13 @@ pip install -r requirements.txt
 
 ### Usage
 
+See the full **[User Guide](docs/USAGE.md)** for installation, configuration,
+all commands, and the recommended engagement workflow.
+
 ```bash
+# ── Dry-run (preview the plan; no connection, no execution) ────
+python main.py scan --target 192.168.1.10 --profile full --simulate --dry-run
+
 # ── Passive scanning (check mode, safe for production) ──────────
 python main.py scan --target localhost --profile quick
 python main.py scan --target 192.168.1.10 --profile full

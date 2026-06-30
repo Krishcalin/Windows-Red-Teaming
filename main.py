@@ -27,6 +27,94 @@ from core.reporter import Reporter
 
 console = Console()
 
+_SEV_STYLE = {
+    "CRITICAL": "red",
+    "HIGH": "dark_orange",
+    "MEDIUM": "yellow",
+    "LOW": "cyan",
+    "INFO": "dim",
+}
+
+
+def _print_dry_run_plan(plan: dict) -> None:
+    """Render an execution plan produced by ScanEngine.plan() as tables.
+
+    No target is contacted and nothing is executed — this only shows what
+    a real scan with the same flags would attempt.
+    """
+    console.print(
+        f"\n[bold yellow]DRY RUN[/bold yellow] — plan for "
+        f"[bold cyan]{plan['target']}[/bold cyan] "
+        f"(profile={plan['profile']}, simulate={plan['simulate']})"
+    )
+    console.print(
+        "[dim]No connection is made and no command is executed.[/dim]"
+    )
+
+    py_table = Table(
+        title="\nPython modules that would run",
+        show_header=True,
+        header_style="bold cyan",
+    )
+    py_table.add_column("Technique ID", style="bold")
+    py_table.add_column("Name")
+    py_table.add_column("Tactic")
+    py_table.add_column("Severity")
+    py_table.add_column("Admin?")
+    py_table.add_column("Planned actions")
+
+    for mod in plan["modules"]:
+        sev = mod["severity"]
+        style = _SEV_STYLE.get(sev, "white")
+        py_table.add_row(
+            mod["technique_id"],
+            mod["technique_name"],
+            mod["tactic"],
+            f"[{style}]{sev}[/{style}]",
+            "Yes" if mod["requires_admin"] else "No",
+            mod["actions"],
+        )
+    console.print(py_table)
+    console.print(f"  Python modules planned: {len(plan['modules'])}")
+
+    if plan["simulate"]:
+        at_table = Table(
+            title="\nAtomic YAML tests that would run",
+            show_header=True,
+            header_style="bold magenta",
+        )
+        at_table.add_column("Technique ID", style="bold")
+        at_table.add_column("Name")
+        at_table.add_column("Tactic")
+        at_table.add_column("Tests", justify="right")
+        at_table.add_column("Admin?")
+
+        for at in plan["atomics"]:
+            at_table.add_row(
+                at["technique_id"],
+                at["display_name"],
+                at["tactic"],
+                str(at["test_count"]),
+                "Yes" if at["elevation_required"] else "No",
+            )
+        console.print(at_table)
+        total = sum(at["test_count"] for at in plan["atomics"])
+        console.print(
+            f"  Atomic techniques planned: {len(plan['atomics'])} "
+            f"({total} tests)"
+        )
+    else:
+        console.print(
+            "  [dim]Atomic tests run in --simulate mode only "
+            "(none planned).[/dim]"
+        )
+
+    console.print(
+        "\n[dim]OS-compatibility guards are evaluated at runtime against the "
+        "live target; unsupported modules will be skipped during a real "
+        "scan.[/dim]"
+    )
+
 
 @click.group()
 @click.version_option(version=__version__, prog_name="Windows Red Teaming Tool")
@@ -51,6 +139,13 @@ def cli() -> None:
     is_flag=True,
     default=False,
     help="Enable active simulation (requires explicit opt-in).",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Preview which modules/atomics would run without connecting or "
+         "executing anything.",
 )
 @click.option(
     "--tactic",
@@ -86,6 +181,7 @@ def scan(
     target: str,
     profile: str,
     simulate: bool,
+    dry_run: bool,
     tactic: str | None,
     technique: str | None,
     output: str | None,
@@ -113,16 +209,33 @@ def scan(
         console.print("[red]Error:[/red] No targets configured.")
         sys.exit(1)
 
+    from core.models import Severity as SevEnum
+
+    severity_threshold = SevEnum(severity.upper())
+
+    # ── Dry-run: preview the plan, contact nothing, change nothing ──
+    if dry_run:
+        engine = ScanEngine(
+            profile=config.profile,
+            simulate=config.simulate,
+            dry_run=True,
+            tactic_filter=config.tactic_filter,
+            technique_filter=config.technique_filter,
+            severity_threshold=severity_threshold,
+            evidence_dir=config.evidence_dir,
+            enabled_techniques=config.enabled_techniques,
+            disabled_techniques=config.disabled_techniques,
+        )
+        for scan_target in config.targets:
+            _print_dry_run_plan(engine.plan(scan_target))
+        sys.exit(0)
+
     # Show authorization banner
     if config.require_authorization:
         console.print(ScanEngine.AUTHORIZATION_BANNER, style="bold yellow")
         if not click.confirm("Do you have authorization to scan this target?"):
             console.print("[yellow]Scan aborted by user.[/yellow]")
             sys.exit(0)
-
-    from core.models import Severity as SevEnum
-
-    severity_threshold = SevEnum(severity.upper())
 
     engine = ScanEngine(
         profile=config.profile,
