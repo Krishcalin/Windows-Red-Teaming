@@ -849,3 +849,144 @@ class TestDryRunRollback:
         module.cleanup.assert_called_once()
         # The module result should be ERROR since simulate raised
         assert result.module_results[0].status == ModuleStatus.ERROR
+
+
+# ===========================================================================
+# 6. Dry-Run Plan Tests
+# ===========================================================================
+
+
+class TestDryRunPlan:
+    """Validate ScanEngine.plan() — the dry-run preview that contacts nothing."""
+
+    def _target(self) -> Target:
+        return Target(
+            host="192.168.1.10",
+            connection=ConnectionMethod.WINRM,
+            os_type=OSType.WIN10,
+        )
+
+    def test_plan_never_creates_a_session(self):
+        """plan() must not connect to or execute anything on the target."""
+        module = _make_dummy_module(technique_id="T9040")
+
+        with patch("core.engine.create_session") as create_session_mock:
+            engine = ScanEngine()
+            engine._modules = [module]
+            engine._atomic_runner = MagicMock()
+            engine._atomic_runner.apply_filters.return_value = []
+
+            plan = engine.plan(self._target())
+
+        create_session_mock.assert_not_called()
+        assert plan["target"] == "192.168.1.10"
+        assert plan["simulate"] is False
+
+    def test_plan_lists_filtered_python_modules(self):
+        """plan() reflects technique filtering."""
+        mod_a = _make_dummy_module(technique_id="T1082", tactic="Discovery")
+        mod_b = _make_dummy_module(technique_id="T1087", tactic="Discovery")
+
+        engine = ScanEngine(technique_filter="T1082")
+        engine._modules = [mod_a, mod_b]
+        engine._atomic_runner = MagicMock()
+        engine._atomic_runner.apply_filters.return_value = []
+
+        plan = engine.plan(self._target())
+
+        ids = [m["technique_id"] for m in plan["modules"]]
+        assert ids == ["T1082"]
+
+    def test_plan_check_mode_has_no_atomics(self):
+        """Without simulate, no atomic tests are planned and actions are read-only."""
+        module = _make_dummy_module(technique_id="T9041", safe_mode=True)
+
+        engine = ScanEngine(simulate=False)
+        engine._modules = [module]
+        engine._atomic_runner = MagicMock()
+
+        plan = engine.plan(self._target())
+
+        assert plan["atomics"] == []
+        # apply_filters on the atomic runner should not even be consulted
+        engine._atomic_runner.apply_filters.assert_not_called()
+        assert plan["modules"][0]["actions"] == "check (read-only)"
+
+    def test_plan_safe_mode_module_skips_simulate_label(self):
+        """A SAFE_MODE module is labelled as simulate-skipped under simulate."""
+        module = _make_dummy_module(technique_id="T9042", safe_mode=True)
+
+        engine = ScanEngine(simulate=True)
+        engine._modules = [module]
+        engine._atomic_runner = MagicMock()
+        engine._atomic_runner.apply_filters.return_value = []
+
+        plan = engine.plan(self._target())
+
+        assert plan["modules"][0]["actions"] == (
+            "check (safe-mode: simulate skipped)"
+        )
+
+    def test_plan_active_module_shows_full_lifecycle(self):
+        """A non-safe-mode module under simulate plans check+simulate+cleanup."""
+        module = _make_dummy_module(technique_id="T9043", safe_mode=False)
+
+        engine = ScanEngine(simulate=True)
+        engine._modules = [module]
+        engine._atomic_runner = MagicMock()
+        engine._atomic_runner.apply_filters.return_value = []
+
+        plan = engine.plan(self._target())
+
+        assert plan["modules"][0]["actions"] == "check + simulate + cleanup"
+
+    def test_plan_includes_atomics_under_simulate(self):
+        """Under simulate, atomic techniques not covered by Python modules appear."""
+        py_module = _make_dummy_module(technique_id="T1082", tactic="Discovery")
+
+        # Atomic technique with no overlapping Python module → should be planned
+        atomic_tech = MagicMock()
+        atomic_tech.technique_id = "T1105"
+        atomic_tech.display_name = "Ingress Tool Transfer"
+        atomic_tech.tactic = "Command and Control"
+        test1 = MagicMock()
+        test1.executor.elevation_required = False
+        test2 = MagicMock()
+        test2.executor.elevation_required = True
+        atomic_tech.windows_tests = [test1, test2]
+
+        engine = ScanEngine(simulate=True)
+        engine._modules = [py_module]
+        engine._atomic_runner = MagicMock()
+        engine._atomic_runner.apply_filters.return_value = [atomic_tech]
+
+        plan = engine.plan(self._target())
+
+        assert len(plan["atomics"]) == 1
+        entry = plan["atomics"][0]
+        assert entry["technique_id"] == "T1105"
+        assert entry["test_count"] == 2
+        assert entry["elevation_required"] is True
+
+    def test_plan_skips_atomics_overlapping_python_modules(self):
+        """Atomics for a technique already covered by a Python module are skipped.
+
+        This mirrors scan()'s selection rule: when no specific technique is
+        requested, atomics only run for techniques NOT covered by Python.
+        """
+        py_module = _make_dummy_module(technique_id="T1082", tactic="Discovery")
+
+        overlapping = MagicMock()
+        overlapping.technique_id = "T1082"  # same as the Python module
+        overlapping.display_name = "System Information Discovery"
+        overlapping.tactic = "Discovery"
+        overlapping.windows_tests = [MagicMock()]
+
+        engine = ScanEngine(simulate=True)  # no technique_filter
+        engine._modules = [py_module]
+        engine._atomic_runner = MagicMock()
+        engine._atomic_runner.apply_filters.return_value = [overlapping]
+
+        plan = engine.plan(self._target())
+
+        assert plan["atomics"] == []

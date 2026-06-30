@@ -58,6 +58,7 @@ class ScanEngine:
         *,
         profile: str = "full",
         simulate: bool = False,
+        dry_run: bool = False,
         tactic_filter: str | None = None,
         technique_filter: str | None = None,
         severity_threshold: Severity = Severity.INFO,
@@ -68,6 +69,7 @@ class ScanEngine:
     ) -> None:
         self.profile = profile
         self.simulate = simulate
+        self.dry_run = dry_run
         self.tactic_filter = tactic_filter
         self.technique_filter = technique_filter
         self.severity_threshold = severity_threshold
@@ -158,6 +160,93 @@ class ScanEngine:
             ]
 
         return filtered
+
+    def plan(self, target: Target) -> dict[str, Any]:
+        """Build an execution plan WITHOUT connecting or running anything.
+
+        Resolves the current filters against discovered Python modules and
+        atomic YAML tests and returns a structured description of exactly
+        what a real scan would attempt. No session is created, no command
+        is executed, and no system change is made — this is the dry-run
+        safety preview.
+
+        OS-compatibility guards (``SUPPORTED_OS``) are evaluated only at
+        runtime against the live target, so they are reported here as
+        "runtime OS check" rather than pre-resolved.
+
+        Args:
+            target: The target the plan is built for (used for labelling
+                only; it is never contacted).
+
+        Returns:
+            A dict with keys ``target``, ``profile``, ``simulate``,
+            ``modules`` (list of planned Python modules) and ``atomics``
+            (list of planned atomic techniques, empty unless simulate).
+        """
+        modules_to_run = self._apply_filters()
+        python_ids = {m.TECHNIQUE_ID for m in modules_to_run}
+
+        planned_modules: list[dict[str, Any]] = []
+        for module in modules_to_run:
+            if self.simulate and not module.SAFE_MODE:
+                actions = "check + simulate + cleanup"
+            elif self.simulate and module.SAFE_MODE:
+                actions = "check (safe-mode: simulate skipped)"
+            else:
+                actions = "check (read-only)"
+
+            planned_modules.append({
+                "technique_id": module.TECHNIQUE_ID,
+                "technique_name": module.TECHNIQUE_NAME,
+                "tactic": module.TACTIC,
+                "severity": module.SEVERITY.value,
+                "requires_admin": module.REQUIRES_ADMIN,
+                "safe_mode": module.SAFE_MODE,
+                "supported_os": [os.value for os in module.SUPPORTED_OS],
+                "actions": actions,
+            })
+
+        planned_atomics: list[dict[str, Any]] = []
+        if self.simulate:
+            atomic_techniques = self._atomic_runner.apply_filters(
+                tactic=self.tactic_filter,
+                technique_id=self.technique_filter,
+            )
+            for technique in atomic_techniques:
+                # Mirror the scan() selection rule: atomics run only for
+                # techniques NOT covered by a Python module, unless a
+                # specific technique was explicitly requested.
+                if not (
+                    self.technique_filter
+                    or technique.technique_id not in python_ids
+                ):
+                    continue
+
+                win_tests = technique.windows_tests
+                planned_atomics.append({
+                    "technique_id": technique.technique_id,
+                    "display_name": technique.display_name,
+                    "tactic": technique.tactic,
+                    "test_count": len(win_tests),
+                    "elevation_required": any(
+                        t.executor.elevation_required for t in win_tests
+                    ),
+                })
+
+        log.info(
+            "plan_built",
+            target=target.host,
+            modules=len(planned_modules),
+            atomics=len(planned_atomics),
+        )
+
+        return {
+            "target": target.host,
+            "profile": self.profile,
+            "simulate": self.simulate,
+            "modules": planned_modules,
+            "atomics": planned_atomics,
+        }
 
     def scan(self, target: Target) -> ScanResult:
         """Execute a full scan against a target.
