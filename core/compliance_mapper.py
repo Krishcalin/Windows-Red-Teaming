@@ -165,6 +165,7 @@ TECHNIQUE_TO_CIS: dict[str, list[str]] = {
     "T1003.001": ["6.1", "6.2", "6.5"],               # LSASS Memory
     "T1003.002": ["6.1", "6.2", "3.11"],              # SAM Database
     "T1003.003": ["6.1", "6.2", "3.11"],              # NTDS.dit
+    "T1003.004": ["3.11", "6.1", "6.2"],              # LSA Secrets
     "T1558.003": ["5.2", "6.3", "6.5"],               # Kerberoasting
     "T1552.001": ["3.1", "3.11", "16.11"],            # Credentials in Files
     "T1110": ["5.2", "6.3", "6.4"],                   # Brute Force
@@ -186,6 +187,7 @@ TECHNIQUE_TO_CIS: dict[str, list[str]] = {
     "T1053.005": ["4.1", "5.4", "8.5"],               # Scheduled Task
     "T1547.001": ["4.1", "2.5", "10.5"],              # Registry Run Keys
     "T1546.001": ["2.5", "4.1", "10.5"],              # Change Default File Association
+    "T1543.003": ["4.1", "5.4", "10.5"],              # Create or Modify Windows Service
 
     # --- Defense Evasion (TA0005) ---
     "T1562.001": ["10.1", "10.2", "13.7"],            # Disable/Modify Security Tools
@@ -194,6 +196,7 @@ TECHNIQUE_TO_CIS: dict[str, list[str]] = {
     "T1070.001": ["8.2", "8.3", "8.9"],               # Clear Windows Event Logs
     "T1218": ["2.5", "2.6", "10.5"],                  # System Binary Proxy Execution (CVE-2026-21513)
     "T1553.005": ["2.5", "10.1", "10.5"],             # MOTW Bypass (CVE-2026-21510)
+    "T1112": ["4.1", "8.2", "8.5"],                   # Modify Registry
 
     # --- Lateral Movement (TA0008) ---
     "T1021.001": ["4.3", "6.4", "12.7"],              # RDP
@@ -216,6 +219,7 @@ TECHNIQUE_TO_CIS: dict[str, list[str]] = {
     # --- Impact (TA0040) ---
     "T1489": ["4.8", "11.1", "11.2"],                 # Service Stop
     "T1486": ["11.1", "11.2", "11.3", "11.4"],        # Data Encrypted for Impact (Ransomware)
+    "T1490": ["11.1", "11.2", "11.3"],                # Inhibit System Recovery
     "T1529": ["4.1", "5.4", "11.1"],                  # System Shutdown/Reboot
 }
 
@@ -239,6 +243,7 @@ TECHNIQUE_TO_NIST: dict[str, list[str]] = {
     "T1003.001": ["AC-3", "IA-5", "SI-16"],           # LSASS Memory
     "T1003.002": ["AC-3", "IA-5", "SC-28"],           # SAM Database
     "T1003.003": ["AC-3", "IA-5", "SC-28"],           # NTDS.dit
+    "T1003.004": ["AC-3", "IA-5", "SC-28"],           # LSA Secrets
     "T1558.003": ["IA-2", "IA-5", "SC-12"],           # Kerberoasting
     "T1552.001": ["IA-5", "SC-28", "CM-6"],           # Credentials in Files
     "T1110": ["AC-7", "IA-2", "IA-5"],                # Brute Force
@@ -260,6 +265,7 @@ TECHNIQUE_TO_NIST: dict[str, list[str]] = {
     "T1053.005": ["AC-3", "CM-6", "AU-2"],            # Scheduled Task
     "T1547.001": ["CM-6", "CM-7", "SI-7"],            # Registry Run Keys
     "T1546.001": ["CM-6", "CM-7", "SI-7"],            # Change Default File Association
+    "T1543.003": ["CM-6", "CM-7", "AU-2"],            # Create or Modify Windows Service
 
     # --- Defense Evasion (TA0005) ---
     "T1562.001": ["SI-3", "SI-4", "CM-6"],            # Disable/Modify Security Tools
@@ -268,6 +274,7 @@ TECHNIQUE_TO_NIST: dict[str, list[str]] = {
     "T1070.001": ["AU-9", "AU-3", "AU-6"],            # Clear Windows Event Logs
     "T1218": ["CM-7", "SI-7", "CM-11"],               # System Binary Proxy Execution (CVE-2026-21513)
     "T1553.005": ["CM-6", "SI-3", "SI-7"],            # MOTW Bypass (CVE-2026-21510)
+    "T1112": ["CM-5", "CM-6", "AU-2"],                # Modify Registry
 
     # --- Lateral Movement (TA0008) ---
     "T1021.001": ["AC-17", "CM-6", "SC-8"],           # RDP
@@ -290,6 +297,7 @@ TECHNIQUE_TO_NIST: dict[str, list[str]] = {
     # --- Impact (TA0040) ---
     "T1489": ["CM-6", "CP-9", "IR-4"],                # Service Stop
     "T1486": ["CP-9", "CP-10", "SC-28"],              # Data Encrypted for Impact (Ransomware)
+    "T1490": ["CP-9", "CP-10", "SI-7"],               # Inhibit System Recovery
     "T1529": ["AC-6", "CM-6", "CP-9"],                # System Shutdown/Reboot
 }
 

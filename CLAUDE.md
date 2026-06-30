@@ -4,13 +4,13 @@
 
 An open-source Python-based active scanning tool for authorized red team security testing on
 Windows systems, aligned with the MITRE ATT&CK Framework. The tool uses a dual-mode architecture:
-33 Python modules for passive security auditing and active simulation, plus 221 YAML-based
+50 Python modules for passive security auditing and active simulation, plus 221 YAML-based
 atomic tests (inspired by Atomic Red Team) for technique execution across all 13 ATT&CK tactics.
 
 **Repository**: https://github.com/Krishcalin/Windows-Red-Teaming
 **License**: MIT
 **Python**: 3.10+
-**Status**: Phases 1-6 complete (33 Python modules + 221 YAML atomic tests + CIS/NIST compliance mapping)
+**Status**: Phases 1-7 complete (50 Python modules + 221 YAML atomic tests + CIS/NIST compliance mapping + dry-run safety)
 
 ---
 
@@ -42,11 +42,11 @@ Windows-Red-Teaming/
 │   ├── privilege_escalation/      # TA0004 — 6 modules (T1548.002, T1134, T1574.001, T1574.002, T1210, T1068)
 │   ├── credential_access/         # TA0006 — 6 modules (T1003.001/.002/.003, T1558.003, T1552.001, T1110)
 │   ├── defense_evasion/           # TA0005 — 6 modules (T1562.001/.002, T1036, T1070.001, T1218, T1553.005)
-│   ├── lateral_movement/          # TA0008 — empty (covered by YAML atomics)
-│   ├── collection/                # TA0009 — empty (covered by YAML atomics)
-│   ├── command_and_control/       # TA0011 — empty (covered by YAML atomics)
-│   ├── exfiltration/              # TA0010 — empty (covered by YAML atomics)
-│   └── impact/                    # TA0040 — empty (covered by YAML atomics)
+│   ├── lateral_movement/          # TA0008 — 4 modules (T1021.001, T1021.002, T1021.006, T1550.002)
+│   ├── collection/                # TA0009 — 3 modules (T1113, T1560, T1074)
+│   ├── command_and_control/       # TA0011 — 1 module  (T1071.001)
+│   ├── exfiltration/              # TA0010 — 2 modules (T1041, T1048)
+│   └── impact/                    # TA0040 — 4 modules (T1486, T1489, T1529, T1490)
 ├── atomics/                       # YAML-based atomic tests (ART-style, 61 techniques, 202 tests)
 │   ├── T1082/T1082.yaml           # System Info Discovery (10 tests)
 │   ├── T1087.001/T1087.001.yaml   # Local Account Discovery (4 tests)
@@ -165,17 +165,22 @@ Session interface methods: `connect()`, `disconnect()`, `run_cmd()`, `run_powers
 
 ## MITRE ATT&CK Tactic Coverage
 
-### Python Modules (33 total, 7 tactics)
+### Python Modules (50 total, 12 tactics)
 
 | Tactic | ID | Modules | Techniques |
 |--------|----|:-------:|------------|
 | Reconnaissance | TA0043 | 1 | T1595 |
 | Discovery | TA0007 | 8 | T1082, T1087, T1069, T1046, T1083, T1057, T1049, T1016 |
 | Execution | TA0002 | 3 | T1059.001, T1059.003, T1047 |
-| Persistence | TA0003 | 3 | T1053.005, T1547.001, T1546.001 |
+| Persistence | TA0003 | 4 | T1053.005, T1547.001, T1546.001, **T1543.003** (Windows Service) |
 | Privilege Escalation | TA0004 | 6 | T1548.002, T1134, T1574.001, T1574.002, **T1210** (CVE-2026-21533), **T1068** (CVE-2026-21519) |
-| Credential Access | TA0006 | 6 | T1003.001, T1003.002, T1003.003, T1558.003, T1552.001, T1110 |
-| Defense Evasion | TA0005 | 6 | T1562.001, T1562.002, T1036, T1070.001, **T1218** (CVE-2026-21513), **T1553.005** (CVE-2026-21510) |
+| Credential Access | TA0006 | 7 | T1003.001, T1003.002, T1003.003, **T1003.004** (LSA Secrets), T1558.003, T1552.001, T1110 |
+| Defense Evasion | TA0005 | 7 | T1562.001, T1562.002, T1036, T1070.001, **T1112** (Modify Registry), **T1218** (CVE-2026-21513), **T1553.005** (CVE-2026-21510) |
+| Lateral Movement | TA0008 | 4 | T1021.001, T1021.002, T1021.006, T1550.002 |
+| Collection | TA0009 | 3 | T1113, T1560, T1074 |
+| Command & Control | TA0011 | 1 | T1071.001 |
+| Exfiltration | TA0010 | 2 | T1041, T1048 |
+| Impact | TA0040 | 4 | T1486, T1489, T1529, **T1490** (Inhibit System Recovery) |
 
 ### YAML Atomic Tests (221 tests, 65 techniques, 11 tactics)
 
@@ -283,7 +288,7 @@ Session interface methods: `connect()`, `disconnect()`, `run_cmd()`, `run_powers
 - [x] Per-technique detail pages with mitigations (collapsible sections in HTML report, MITRE M-code mitigations from each module's `get_mitigations()`)
 
 ### Phase 7 — Testing & Hardening
-- [x] Unit tests (201 passing — module + atomic framework + reporting/compliance/CVE + dry-run plan)
+- [x] Unit tests (213 passing — module + atomic framework + reporting/compliance/CVE + dry-run plan + Phase 8 modules)
 - [x] In-process integration tests (`tests/test_integration.py` — scan flow, safety controls, report pipeline, module discovery, dry-run plan)
 - [x] Safety controls validation:
   - [x] `--dry-run` plan preview (`ScanEngine.plan()`) — resolves filters and lists every Python module + atomic test that would run, with zero target contact
@@ -292,6 +297,14 @@ Session interface methods: `connect()`, `disconnect()`, `run_cmd()`, `run_powers
 - [x] CI/CD pipeline (GitHub Actions — `.github/workflows/ci.yml`)
 - [x] User documentation (`docs/USAGE.md`)
 - [ ] Integration tests against live lab VMs (Win10/11/2019/2022) — manual, environment-dependent
+
+### Phase 8 — Expanded Technique Coverage (COMPLETE)
+- [x] T1003.004 — OS Credential Dumping: LSA Secrets (Credential Access) — RunAsPPL/WDigest/auto-logon/auditing audit + atomic tests
+- [x] T1112 — Modify Registry (Defense Evasion) — registry auditing, DisableRegistryTools, IFEO debuggers, Defender tamper keys
+- [x] T1543.003 — Create or Modify System Process: Windows Service (Persistence) — unquoted paths + user-writable binary audit
+- [x] T1490 — Inhibit System Recovery (Impact) — ransomware-readiness: shadow copies, VSS service, WinRE, boot recovery
+- [x] CIS Benchmark + NIST 800-53 mappings for all 4 new techniques
+- [x] 12 unit tests (`tests/test_modules/test_phase8.py`) + new T1003.004 atomic test file
 
 ---
 
